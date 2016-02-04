@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component
 class ActiveMQCLI extends CommandMarker {
 
   @CliCommand(value = Array("release-notes"), help = "Displays release notes")
-  def releaseNotes: String = "hello" //ActiveMQCLI.ReleaseNotes.keySet.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x).map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
+  def releaseNotes: String = ActiveMQCLI.ReleaseNotes.keySet.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x).map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
 
 }
 

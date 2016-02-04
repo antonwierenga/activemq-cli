@@ -60,18 +60,41 @@ class MessageCommandsTests extends CommandsTests {
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
     try {
       assertEquals(info(s"Messages saved: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
-      println("*******************")
-      println(XML.loadFile(messageFilePath))
-      assertTrue(true)
+      val xml = XML.loadFile(messageFilePath)
+      assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
+      assertTrue((xml \ "jms-message" \ "header" \ "correlation-id").isEmpty)
+      assertEquals("2", (xml \ "jms-message" \ "header" \ "delivery-mode") text)
+      assertFalse((xml \ "jms-message" \ "header" \ "destination").isEmpty)
+      assertEquals("0", (xml \ "jms-message" \ "header" \ "expiration") text)
+      assertEquals("0", (xml \ "jms-message" \ "header" \ "priority") text)
+      assertEquals("false", (xml \ "jms-message" \ "header" \ "redelivered") text)
+      assertTrue((xml \ "jms-message" \ "header" \ "reply-to").isEmpty)
+      assertFalse((xml \ "jms-message" \ "header" \ "timestamp").isEmpty)
+      assertTrue((xml \ "jms-message" \ "header" \ "type").isEmpty)
+      assertEquals("testMessage", (xml \ "jms-message" \ "body") text)
     } finally new File(messageFilePath).delete
+  }
 
-    /*assertEquals(
-      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
-         |  ----------  -------  ---------  --------  --------
-         |  testQueue   1        0          1         0
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
-    )*/
+  @Test
+  def testSendAndSaveInlineMessageAllHeadersProvided = {
+    assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --correlation-id testCorrelationId --delivery-mode 2 --time-to-live 2000 --priority 1 --body testMessage").getResult)
+    assertEquals(info("Messages listed: 1"), shell.executeCommand("list-messages --queue testQueue").getResult)
+
+    val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
+    try {
+      assertEquals(info(s"Messages saved: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
+      val xml = XML.loadFile(messageFilePath)
+      assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
+      assertEquals("testCorrelationId", (xml \ "jms-message" \ "header" \ "correlation-id") text)
+      assertEquals("2", (xml \ "jms-message" \ "header" \ "delivery-mode") text)
+      assertFalse((xml \ "jms-message" \ "header" \ "destination").isEmpty)
+      assertEquals("1", (xml \ "jms-message" \ "header" \ "priority") text)
+      assertEquals("false", (xml \ "jms-message" \ "header" \ "redelivered") text)
+      assertTrue((xml \ "jms-message" \ "header" \ "reply-to").isEmpty)
+      assertFalse((xml \ "jms-message" \ "header" \ "timestamp").isEmpty)
+      assertTrue((xml \ "jms-message" \ "header" \ "type").isEmpty)
+      assertEquals("testMessage", (xml \ "jms-message" \ "body") text)
+    } finally new File(messageFilePath).delete
   }
 
   @Test

@@ -40,7 +40,7 @@ class CommandsTests {
 
 object CommandsTests {
 
-  System.setProperty("config.file", "./src/test/resources/activemq-cli.config")
+  System.setProperty("config.file", "./src/test/resources/activemq-cli-test.config")
   val shell = new Bootstrap().getJLineShellComponent()
 
   @BeforeClass

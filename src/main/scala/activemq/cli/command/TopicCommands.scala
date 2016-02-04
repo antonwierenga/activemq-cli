@@ -78,22 +78,25 @@ class TopicCommands extends Commands {
   def topics(@CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String): String = {
     val headers = List("Topic Name", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      renderTable(
-        brokerViewMBean.getTopics.filter(objectName ⇒
-          if (filter) {
-            getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
-          } else {
-            true
-          }).par.map({ objectName ⇒
-          (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true))
-        }).par.map(topicViewMBean ⇒ List(topicViewMBean.getName, topicViewMBean.getEnqueueCount, topicViewMBean.getDequeueCount))
-          .seq.sortBy(ActiveMQCLI.Config.getOptionalString(s"command.topics.order.field") match {
-            case Some("Enqueued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Enqueued"))).asInstanceOf[String] }
-            case Some("Dequeued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Dequeued"))).asInstanceOf[String] }
-            case _ ⇒ (row: Seq[Any]) ⇒ { row(0).asInstanceOf[String] }
-          }),
-        headers
-      )
+      val rows = brokerViewMBean.getTopics.filter(objectName ⇒
+        if (filter) {
+          getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
+        } else {
+          true
+        }).par.map({ objectName ⇒
+        (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true))
+      }).par.map(topicViewMBean ⇒ List(topicViewMBean.getName, topicViewMBean.getEnqueueCount, topicViewMBean.getDequeueCount))
+        .seq.sortBy(ActiveMQCLI.Config.getOptionalString(s"command.topics.order.field") match {
+          case Some("Enqueued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Enqueued"))).asInstanceOf[String] }
+          case Some("Dequeued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Dequeued"))).asInstanceOf[String] }
+          case _ ⇒ (row: Seq[Any]) ⇒ { row(0).asInstanceOf[String] }
+        })
+
+      if (rows.size > 0) {
+        renderTable(rows, headers) + s"\nTotal topics: ${rows.size}"
+      } else {
+        warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
+      }
     })
   }
 }

@@ -63,7 +63,7 @@ object Implicits {
                                { addOptional(Option(message.getJMSType).isDefined, <type>{ message.getJMSType }</type>) }
                              </header>
                              {
-                               addOptional(message.getPropertyNames.hasMoreElements, <properties> { message.getPropertyNames.map(name ⇒ <property><name>{ name }</name><value>message.getStringProperty(name))</value></property>) } </properties>)
+                               addOptional(message.getPropertyNames.hasMoreElements, <properties> { message.getPropertyNames.map(name ⇒ <property><name>{ name }</name><value>{ message.getStringProperty(name.toString) }</value></property>) } </properties>)
                              }
                              {
                                message match {

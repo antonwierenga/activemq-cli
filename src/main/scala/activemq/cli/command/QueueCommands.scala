@@ -101,28 +101,31 @@ class QueueCommands extends Commands {
   def queues(@CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String): String = {
     val headers = List("Queue Name", "Pending", "Consumers", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      renderTable(
-        brokerViewMBean.getQueues.filter(objectName ⇒
-          if (filter) {
-            getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
-          } else {
-            true
-          }).par.map({ objectName ⇒
-          (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[QueueViewMBean], true))
-        }).par.map(queueViewMBean ⇒ List(queueViewMBean.getName, queueViewMBean.getQueueSize, queueViewMBean.getConsumerCount,
-          queueViewMBean.getEnqueueCount, queueViewMBean.getDequeueCount))
-          .seq.sortBy(ActiveMQCLI.Config.getOptionalString(s"command.queues.order.field") match {
-            case Some("Pending") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Pending"))).asInstanceOf[String] }
-            case Some("Consumers") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Consumers"))).asInstanceOf[String] }
-            case Some("Enqueued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Enqueued"))).asInstanceOf[String] }
-            case Some("Dequeued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Dequeued"))).asInstanceOf[String] }
-            case _ ⇒ (row: Seq[Any]) ⇒ { row(headers.indexOf("Queue Name" + 1)).asInstanceOf[String] }
-          })(ActiveMQCLI.Config.getOptionalString(s"command.queues.order.direction") match {
-            case Some("reverse") ⇒ Ordering[String].reverse
-            case _               ⇒ Ordering[String]
-          }),
-        headers
-      )
+      val rows = brokerViewMBean.getQueues.filter(objectName ⇒
+        if (filter) {
+          getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
+        } else {
+          true
+        }).par.map({ objectName ⇒
+        (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[QueueViewMBean], true))
+      }).par.map(queueViewMBean ⇒ List(queueViewMBean.getName, queueViewMBean.getQueueSize, queueViewMBean.getConsumerCount,
+        queueViewMBean.getEnqueueCount, queueViewMBean.getDequeueCount))
+        .seq.sortBy(ActiveMQCLI.Config.getOptionalString(s"command.queues.order.field") match {
+          case Some("Pending") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Pending"))).asInstanceOf[String] }
+          case Some("Consumers") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Consumers"))).asInstanceOf[String] }
+          case Some("Enqueued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Enqueued"))).asInstanceOf[String] }
+          case Some("Dequeued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Dequeued"))).asInstanceOf[String] }
+          case _ ⇒ (row: Seq[Any]) ⇒ { row(headers.indexOf("Queue Name" + 1)).asInstanceOf[String] }
+        })(ActiveMQCLI.Config.getOptionalString(s"command.queues.order.direction") match {
+          case Some("reverse") ⇒ Ordering[String].reverse
+          case _               ⇒ Ordering[String]
+        })
+
+      if (rows.size > 0) {
+        renderTable(rows, headers) + s"\nTotal messages in ${rows.size} queues: ${format(rows.map(row ⇒ row(headers.indexOf("Pending")).asInstanceOf[Long]).sum)}"
+      } else {
+        warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
+      }
     })
   }
 }

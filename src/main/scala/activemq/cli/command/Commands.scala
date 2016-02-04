@@ -36,6 +36,12 @@ import scala.tools.jline.console.ConsoleReader
 
 abstract class Commands extends PrintStackTraceExecutionProcessor {
 
+  val numberFormatter = java.text.NumberFormat.getIntegerInstance
+
+  def format(number: Long): String = {
+    numberFormatter.format(number)
+  }
+
   def confirm(force: String): Unit = {
     force match {
       case "yes" ⇒ // skip confirmation
