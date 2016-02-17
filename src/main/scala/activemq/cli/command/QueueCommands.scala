@@ -32,14 +32,7 @@ import org.springframework.stereotype.Component
 class QueueCommands extends Commands {
 
   @CliAvailabilityIndicator(Array("add-queue", "purge-queue", "purge-all-queues", "remove-queue", "remove-all-queues", "queues"))
-  def isBrokerAvailable: Boolean = {
-    ActiveMQCLI.broker match {
-      case Some(matched) ⇒
-        true
-      case _ ⇒
-        false
-    }
-  }
+  def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("add-queue"), help = "Adds a queue")
   def addQueue(@CliOption(key = Array("name"), mandatory = true, help = "The name of the queue") name: String): String = {
@@ -122,7 +115,7 @@ class QueueCommands extends Commands {
         })
 
       if (rows.size > 0) {
-        renderTable(rows, headers) + s"\nTotal messages in ${rows.size} queues: ${format(rows.map(row ⇒ row(headers.indexOf("Pending")).asInstanceOf[Long]).sum)}"
+        renderTable(rows, headers)
       } else {
         warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
       }

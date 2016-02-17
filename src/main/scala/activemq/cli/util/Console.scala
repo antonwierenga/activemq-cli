@@ -18,20 +18,33 @@ package activemq.cli.util
 
 object Console {
 
-  val AnsiCodes = Map("Reset" → 0, "Black" → 30, "Red" → 31, "Green" → 32, "Yellow" → 33, "Blue" → 34, "Purple" → 35, "Cyan" → 36, "Gray" → 37)
+  val AnsiCodes = Map("reset" → "0", "gray" → "1;30", "light-red" → "1;31", "red" → "31", "light-green" → "1;32", "green" → "32", "light-yellow" → "1;33",
+    "yellow" → "33", "light-blue" → "1;34", "blue" → "34", "light-purple" → "1;35", "purple" → "35", "light-cyan" → "1;36", "cyan" → "36",
+    "light-white" → "1;37", "white" → "37")
+
+  /*    37 white
+    40 black background
+    41 red background
+    42 green background
+    43 yellow background
+    44 blue background
+    45 magenta background
+    46 cyan background
+    47 white background*/
+
   val AnsiEscapeCodeTemplate = "\u001B[%sm"
 
   def printInfo(text: String): Unit = {
     println(info(text)) // scalastyle:ignore
   }
 
-  def prompt(text: String): String = decorate(text, AnsiCodes.get("Yellow").get)
+  def prompt(text: String): String = decorate(text, AnsiCodes.get("yellow").get)
 
-  def info(text: String): String = decorate(text, AnsiCodes.get("Green").get)
+  def info(text: String): String = decorate(text, AnsiCodes.get("green").get)
 
-  def warn(text: String): String = decorate(text, AnsiCodes.get("Purple").get)
+  def warn(text: String): String = decorate(text, AnsiCodes.get("purple").get)
 
-  def decorate(text: String, ansiEscapeCode: Int): String = {
-    AnsiEscapeCodeTemplate.format(ansiEscapeCode) + text + AnsiEscapeCodeTemplate.format(AnsiCodes.get("Reset").get)
+  def decorate(text: String, ansiEscapeCode: String): String = {
+    AnsiEscapeCodeTemplate.format(ansiEscapeCode) + text + AnsiEscapeCodeTemplate.format(AnsiCodes.get("reset").get)
   }
 }

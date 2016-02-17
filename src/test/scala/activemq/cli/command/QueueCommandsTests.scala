@@ -43,12 +43,7 @@ class QueueCommandsTests extends CommandsTests {
 
   @Test
   def testQueuesEmpty = {
-    assertEquals(
-      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
-         |  ----------  -------  ---------  --------  --------
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
-    )
+    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("queues").getResult)
   }
 
   @Test
@@ -67,12 +62,7 @@ class QueueCommandsTests extends CommandsTests {
   def testRemoveQueue = {
     assertEquals(info("Queue 'testQueue' added"), shell.executeCommand("add-queue --name testQueue").getResult)
     assertEquals(info("Queue 'testQueue' removed"), shell.executeCommand("remove-queue --name testQueue --force").getResult)
-    assertEquals(
-      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
-         |  ----------  -------  ---------  --------  --------
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
-    )
+    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("queues").getResult)
   }
 
   @Test
@@ -106,12 +96,7 @@ class QueueCommandsTests extends CommandsTests {
     assertEquals(info("Queue 'testQueue1' added"), shell.executeCommand("add-queue --name testQueue1").getResult)
     assertEquals(info("Queue 'testQueue2' added"), shell.executeCommand("add-queue --name testQueue2").getResult)
     assertEquals(info("Queues removed: 2"), shell.executeCommand("remove-all-queues --force").getResult)
-    assertEquals(
-      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
-         |  ----------  -------  ---------  --------  --------
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
-    )
+    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("queues").getResult)
   }
 
   @Test

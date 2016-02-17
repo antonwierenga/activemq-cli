@@ -22,6 +22,8 @@ import org.springframework.shell.plugin.support.DefaultPromptProvider
 import org.springframework.stereotype.Component
 import activemq.cli.ActiveMQCLI
 import activemq.cli.command.BrokerCommands
+import activemq.cli.util.Console
+import activemq.cli.util.Implicits._
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -30,7 +32,10 @@ class PromptProvider extends DefaultPromptProvider {
   override def getPrompt: String = {
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
-        s"${ActiveMQCLI.broker.get.alias}>"
+        Console.AnsiCodes.get(ActiveMQCLI.Config.getOptionalString(s"broker.${matched.alias}.prompt-color").getOrElse("").toLowerCase) match {
+          case Some(ansiCode) ⇒ Console.decorate(s"${matched.alias}>", ansiCode)
+          case _              ⇒ s"${matched.alias}>"
+        }
       case _ ⇒
         "activemq-cli>"
     }

@@ -32,14 +32,7 @@ import org.springframework.stereotype.Component
 class TopicCommands extends Commands {
 
   @CliAvailabilityIndicator(Array("add-topic", "remove-topic", "topics", "remove-all-topics"))
-  def isBrokerAvailable: Boolean = {
-    ActiveMQCLI.broker match {
-      case Some(matched) ⇒
-        true
-      case _ ⇒
-        false
-    }
-  }
+  def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("add-topic"), help = "Adds a topic")
   def addTopic(@CliOption(key = Array("name"), mandatory = true, help = "The Name of the Topic") name: String): String = {
@@ -93,7 +86,7 @@ class TopicCommands extends Commands {
         })
 
       if (rows.size > 0) {
-        renderTable(rows, headers) + s"\nTotal topics: ${rows.size}"
+        renderTable(rows, headers)
       } else {
         warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
       }

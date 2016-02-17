@@ -43,7 +43,7 @@ object ActiveMQCLI extends App {
   System.setProperty("config.file", s"$ApplicationPath/conf/activemq-cli.config")
   lazy val Config: Config = ConfigFactory.load
 
-  var broker: Option[Broker] = _
+  var broker: Option[Broker] = None
 
   Bootstrap.main(args)
 

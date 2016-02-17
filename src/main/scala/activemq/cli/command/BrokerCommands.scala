@@ -22,7 +22,9 @@ import activemq.cli.util.Console._
 import activemq.cli.util.Implicits._
 import java.io.File
 import javax.management.MBeanServerConnection
+import javax.management.MBeanServerInvocationHandler
 import org.apache.activemq.broker.jmx.BrokerViewMBean
+import org.apache.activemq.broker.jmx.QueueViewMBean
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator
 import org.springframework.shell.core.annotation.CliCommand
 import org.springframework.shell.core.annotation.CliOption
@@ -33,26 +35,25 @@ import scala.tools.jline.console.ConsoleReader
 class BrokerCommands extends Commands {
 
   @CliAvailabilityIndicator(Array("info", "disconnect"))
-  def isBrokerAvailable: Boolean = {
-    ActiveMQCLI.broker match {
-      case Some(matched) ⇒
-        true
-      case _ ⇒
-        false
-    }
-  }
+  def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("info"), help = "Displays broker info")
   def brokerInfo(): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      renderTable(List(List(brokerViewMBean.getBrokerId, brokerViewMBean.getBrokerName, brokerViewMBean.getBrokerVersion, s"${brokerViewMBean.getMemoryPercentUsage}%",
-        s"${brokerViewMBean.getStorePercentUsage}%", brokerViewMBean.getUptime)), List("Broker ID", "Broker Name", "Broker Version", "Memory Limit used",
-        "Store Limit used", "Uptime"))
+      val queues = brokerViewMBean.getQueues
+      val messageTotal = queues.par.map({ objectName ⇒
+        (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[QueueViewMBean], true))
+      }).par.map(queueViewMBean ⇒ queueViewMBean.getQueueSize).sum
+
+      renderTable(List(List(brokerViewMBean.getBrokerId, brokerViewMBean.getBrokerName, brokerViewMBean.getBrokerVersion,
+        s"${brokerViewMBean.getMemoryPercentUsage}%", s"${brokerViewMBean.getStorePercentUsage}%", brokerViewMBean.getUptime, queues.size,
+        brokerViewMBean.getTopics.size, messageTotal)), List("Broker ID", "Broker Name", "Broker Version", "Memory Limit used",
+        "Store Limit used", "Uptime", "Queues", "Topics", "Messages"))
     })
   }
 
   @CliCommand(value = Array("disconnect"), help = "Disconnect from the broker")
-  def disconnect() = {
+  def disconnect(): String = {
     ActiveMQCLI.broker = None
     info(s"Disconnected from broker")
   }
@@ -81,7 +82,8 @@ class BrokerCommands extends Commands {
         new ConsoleReader().readLine(prompt("Enter password: "), new Character('*'))
       }
 
-      ActiveMQCLI.broker = Option(new Broker(pBroker, ActiveMQCLI.Config.getString(s"broker.$pBroker.amqurl"), ActiveMQCLI.Config.getString(s"broker.$pBroker.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$pBroker.jmxname"), username, password))
+      ActiveMQCLI.broker = Option(new Broker(pBroker, ActiveMQCLI.Config.getString(s"broker.$pBroker.amqurl"),
+        ActiveMQCLI.Config.getString(s"broker.$pBroker.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$pBroker.jmxname"), username, password))
 
       withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
         info(s"Broker is set to '${ActiveMQCLI.broker.get.jmxurl}'")

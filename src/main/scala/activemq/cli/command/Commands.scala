@@ -42,6 +42,15 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     numberFormatter.format(number)
   }
 
+  def formatDuration(duration: Long): String = {
+    val formatTimeUnit = (l: Long, timeUnit: String) ⇒ if (l == 0) None else if (l == 1) s"$l $timeUnit" else s"$l ${timeUnit}s"
+    List(
+      formatTimeUnit((duration / (1000 * 60 * 60)) % 24, "hour"),
+      formatTimeUnit((duration / (1000 * 60)) % 60, "minute"),
+      formatTimeUnit((duration / 1000) % 60, "second")
+    ).filter(_ != None).mkString(" ")
+  }
+
   def confirm(force: String): Unit = {
     force match {
       case "yes" ⇒ // skip confirmation
@@ -99,7 +108,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   /** Gets the ObjectName for the given Queue. If the Queue does not exist, it is created first. */
   def getQueueObjectName(brokerViewMBean: BrokerViewMBean, queue: String): ObjectName = {
     brokerViewMBean.getQueues.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).contains(queue)).headOption.getOrElse({
+      getDestinationKeyProperty(objectName).equals(queue)).headOption.getOrElse({
       brokerViewMBean.addQueue(queue)
       validateQueueExists(brokerViewMBean, queue)
     })
@@ -108,14 +117,15 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   /** Gets the ObjectName for the given Topic. If the Topic does not exist, it is created first. */
   def getTopicObjectName(brokerViewMBean: BrokerViewMBean, topic: String): ObjectName = {
     brokerViewMBean.getTopics.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).contains(topic)).headOption.getOrElse({
+      getDestinationKeyProperty(objectName).equals(topic)).headOption.getOrElse({
       brokerViewMBean.addTopic(topic)
       validateQueueExists(brokerViewMBean, topic)
     })
   }
 
   def withSession(callback: (Session) ⇒ Unit): Unit = {
-    val connection = new ActiveMQConnectionFactory(ActiveMQCLI.broker.get.username, ActiveMQCLI.broker.get.password, ActiveMQCLI.broker.get.amqurl).createConnection
+    val connection = new ActiveMQConnectionFactory(ActiveMQCLI.broker.get.username, ActiveMQCLI.broker.get.password,
+      ActiveMQCLI.broker.get.amqurl).createConnection
     connection.start
     val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
     callback(session)

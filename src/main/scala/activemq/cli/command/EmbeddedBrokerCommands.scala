@@ -30,17 +30,10 @@ import org.springframework.stereotype.Component
 @Component
 class EmbeddedBrokerCommands extends Commands {
 
-  var embeddedBroker: Option[BrokerService] = _
+  var embeddedBroker: Option[BrokerService] = None
 
   @CliAvailabilityIndicator(Array("start-embedded-broker"))
-  def isStartEmbeddedBrokerAvailable: Boolean = {
-    embeddedBroker match {
-      case Some(matched) if matched.isStarted ⇒
-        false
-      case _ ⇒
-        true
-    }
-  }
+  def isStartEmbeddedBrokerAvailable: Boolean = embeddedBroker.isEmpty
 
   @CliAvailabilityIndicator(Array("stop-embedded-broker"))
   def isStopEmbeddedBrokerAvailable: Boolean = {

@@ -26,7 +26,6 @@ import java.io.BufferedWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
-import javax.jms.DeliveryMode
 import javax.jms.Message
 import javax.jms.Session
 import javax.management.MBeanServerConnection
@@ -38,19 +37,13 @@ import org.springframework.shell.core.annotation.CliAvailabilityIndicator
 import org.springframework.shell.core.annotation.CliCommand
 import org.springframework.shell.core.annotation.CliOption
 import org.springframework.stereotype.Component
+import scala.concurrent.duration.Duration
 
 @Component
 class MessageCommands extends Commands {
 
   @CliAvailabilityIndicator(Array("move-messages", "copy-messages", "list-messages", "send-message", "save-messages"))
-  def isBrokerAvailable: Boolean = {
-    ActiveMQCLI.broker match {
-      case Some(matched) ⇒
-        true
-      case _ ⇒
-        false
-    }
-  }
+  def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("move-messages"), help = "Moves messages between queues")
   def moveMessages(
@@ -81,33 +74,44 @@ class MessageCommands extends Commands {
   }
 
   @CliCommand(value = Array("send-message"), help = "Sends a message to a queue or topic")
-  def sendMessage(
+  def sendMessage( //scalastyle:ignore
     @CliOption(key = Array("queue"), mandatory = false, help = "The name of the queue") queue: String,
     @CliOption(key = Array("topic"), mandatory = false, help = "The name of the topic") topic: String,
-    @CliOption(key = Array("body"), mandatory = true, help = "The body of the message") body: String,
+    @CliOption(key = Array("body"), mandatory = false, help = "The body of the message") body: String,
     @CliOption(key = Array("correlation-id"), mandatory = false, help = "The correlation id of the message") correlationId: String,
-    @CliOption(key = Array("delivery-mode"), mandatory = false, help = "The delivery mode of the message") deliveryMode: String,
+    @CliOption(key = Array("delivery-mode"), mandatory = false, help = "The delivery mode of the message") deliveryMode: DeliveryMode,
     @CliOption(key = Array("time-to-live"), mandatory = false, help = "The time to live (in milliseconds) of the message") timeToLive: String,
-    @CliOption(key = Array("priority"), mandatory = false, help = "The priority of the message") priority: String
+    @CliOption(key = Array("priority"), mandatory = false, help = "The priority of the message") priority: String,
+    @CliOption(key = Array("times"), mandatory = false, unspecifiedDefaultValue = "1", help = "The number of times the message is send") times: Int,
+    @CliOption(key = Array("file"), mandatory = false, help = "The file containing messages to send") file: String
   ): String = {
+    val start = System.currentTimeMillis
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      if ((!queue && !topic) || (queue && topic)) throw new IllegalArgumentException("Either --queue or --topic must be specified, but not both)")
-      if (queue) {
-        brokerViewMBean.addQueue(queue)
-        val headers = new java.util.HashMap[String, Any]()
-        if (Option(correlationId).isDefined) headers.put("JMSCorrelationID", correlationId)
-        if (Option(deliveryMode).isDefined) headers.put("JMSDeliveryMode", deliveryMode) else headers.put("JMSDeliveryMode", DeliveryMode.PERSISTENT)
-        if (Option(priority).isDefined) headers.put("JMSPriority", priority)
-        if (Option(timeToLive).isDefined) headers.put("timeToLive", timeToLive)
-
-        MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getQueueObjectName(brokerViewMBean, queue), classOf[QueueViewMBean], true)
-          .sendTextMessage(headers, body)
-      } else {
-        brokerViewMBean.addTopic(topic)
-        MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getTopicObjectName(brokerViewMBean, topic), classOf[TopicViewMBean], true)
-          .sendTextMessage(body)
+      if (!file && !body) throw new IllegalArgumentException("Either --body or --file must be specified, but not both")
+      if ((!queue && !topic) || (queue && topic)) throw new IllegalArgumentException("Either --queue or --topic must be specified, but not both")
+      if (file && (correlationId || Option(deliveryMode).isDefined || timeToLive || priority)) {
+        throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed (JMS headers)")
       }
-      info(s"Messages sent to ${if (queue) s"queue '$queue'" else s"topic '$topic'"}: 1")
+
+      val headers = new java.util.HashMap[String, Any]()
+      if (Option(correlationId).isDefined) headers.put("JMSCorrelationID", correlationId)
+      if (Option(deliveryMode).isDefined) headers.put("JMSDeliveryMode", deliveryMode.getJMSDeliveryMode) else headers.put("JMSDeliveryMode",
+        DeliveryMode.PERSISTENT.getJMSDeliveryMode)
+      if (Option(priority).isDefined) headers.put("JMSPriority", priority)
+      if (Option(timeToLive).isDefined) headers.put("timeToLive", timeToLive)
+
+      for (i ← (1 to times)) yield {
+        if (queue) {
+          MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getQueueObjectName(brokerViewMBean, queue), classOf[QueueViewMBean], true)
+            .sendTextMessage(headers, body)
+        } else {
+          MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getTopicObjectName(brokerViewMBean, topic), classOf[TopicViewMBean], true)
+            .sendTextMessage(body)
+        }
+      }
+      val duration = System.currentTimeMillis - start
+      formatDuration(duration)
+      info(s"Messages sent to ${if (queue) s"queue '$queue'" else s"topic '$topic'"}: 1${if (duration > 1000) s" (${formatDuration(duration)})" else ""}")
     })
   }
 
@@ -142,15 +146,16 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String
   ): String = {
     withEveryMirrorQueueMessage(queue, selector, regex, "Messages listed", (message: Message) ⇒ {
-      println(info(s"${message.toXML}\n"))
+      println(info(s"${message.toXML}\n")) //scalastyle:ignore
     })
   }
 
   def withEveryMirrorQueueMessage(queue: String, selector: String, regex: String, message: String, callback: (Message) ⇒ Unit): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       var callbacks = 0
-      val mirrorQueue = s"activemq-cli.$queue.mirror.${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.${UUID.randomUUID().toString()}"
-      val messagesCopied = MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, queue), classOf[QueueViewMBean], true)
+      val mirrorQueue = getNewMirrorQueue(queue)
+      val messagesCopied = MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, queue),
+        classOf[QueueViewMBean], true)
         .copyMatchingMessagesTo(selector, mirrorQueue)
       withSession((session: Session) ⇒ {
         val messageConsumer = session.createConsumer(session.createQueue(mirrorQueue))
@@ -166,5 +171,9 @@ class MessageCommands extends Commands {
       brokerViewMBean.removeQueue(mirrorQueue)
       info(s"$message: $callbacks")
     })
+  }
+
+  def getNewMirrorQueue(queue: String): String = {
+    s"activemq-cli.$queue.mirror.${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.${UUID.randomUUID().toString()}"
   }
 }
