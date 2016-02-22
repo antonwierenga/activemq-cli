@@ -18,6 +18,7 @@ package activemq.cli.command
 
 import activemq.cli.ActiveMQCLI
 import activemq.cli.command.CommandsTests._
+import activemq.cli.command.MessageCommandsTests._
 import activemq.cli.util.Console._
 import java.io.File
 import org.junit.After
@@ -37,7 +38,7 @@ import org.springframework.shell.core.CommandResult
 import org.springframework.shell.core.JLineShellComponent
 import scala.xml.XML
 
-class MessageCommandsTests extends CommandsTests {
+class MessageCommandsTests {
 
   @Before
   def before = {
@@ -59,7 +60,7 @@ class MessageCommandsTests extends CommandsTests {
 
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
     try {
-      assertEquals(info(s"Messages saved: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
+      assertEquals(info(s"Messages saved to $messageFilePath: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertTrue((xml \ "jms-message" \ "header" \ "correlation-id").isEmpty)
@@ -82,7 +83,7 @@ class MessageCommandsTests extends CommandsTests {
 
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
     try {
-      assertEquals(info(s"Messages saved: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
+      assertEquals(info(s"Messages saved to $messageFilePath: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertEquals("testCorrelationId", (xml \ "jms-message" \ "header" \ "correlation-id") text)
@@ -95,6 +96,12 @@ class MessageCommandsTests extends CommandsTests {
       assertTrue((xml \ "jms-message" \ "header" \ "type").isEmpty)
       assertEquals("testMessage", (xml \ "jms-message" \ "body") text)
     } finally new File(messageFilePath).delete
+  }
+
+  @Test
+  def testSendInlineMessageTimes2 = {
+    assertEquals(info("Messages sent to queue 'testQueue': 2"), shell.executeCommand("send-message --queue testQueue --body testMessage --times 2").getResult)
+    assertEquals(info("Messages listed: 2"), shell.executeCommand("list-messages --queue testQueue").getResult)
   }
 
   @Test
@@ -113,4 +120,15 @@ class MessageCommandsTests extends CommandsTests {
       assertTrue(shell.executeCommand("connect --broker test").isSuccess)
     }
   }
+}
+
+object MessageCommandsTests {
+
+  val shell = createShell
+
+  @BeforeClass
+  def beforeClass() = startAndConnectToEmbeddedBroker(shell)
+
+  @AfterClass
+  def afterClass() = stopEmbeddedBroker(shell)
 }

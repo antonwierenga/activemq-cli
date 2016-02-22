@@ -14,7 +14,7 @@ libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 libraryDependencies += "org.scala-lang" % "jline" % "2.11.0-M3"
 libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.3"
 libraryDependencies += "junit" % "junit" % "4.8" % "test"
-libraryDependencies += "com.novocode" % "junit-interface" % "0.8" % "test->default"
+libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test->default"
 
 import scalariform.formatter.preferences._
 

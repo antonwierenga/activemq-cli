@@ -31,10 +31,14 @@ import org.springframework.shell.Bootstrap
 import org.springframework.shell.core.CommandResult
 import org.springframework.shell.core.JLineShellComponent
 import activemq.cli.ActiveMQCLI
-import activemq.cli.command.CommandsTests._
+import activemq.cli.command.QueueCommandsTests._
 import activemq.cli.util.Console._
+import activemq.cli.command.CommandsTests._
 
-class QueueCommandsTests extends CommandsTests {
+import java.io.File
+import org.springframework.shell.Bootstrap
+
+class QueueCommandsTests {
 
   @Before
   def before = {
@@ -146,4 +150,15 @@ class QueueCommandsTests extends CommandsTests {
       assertTrue(shell.executeCommand("connect --broker test").isSuccess)
     }
   }
+}
+
+object QueueCommandsTests {
+
+  val shell = createShell
+
+  @BeforeClass
+  def beforeClass() = startAndConnectToEmbeddedBroker(shell)
+
+  @AfterClass
+  def afterClass() = stopEmbeddedBroker(shell)
 }

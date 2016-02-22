@@ -16,41 +16,33 @@
 
 package activemq.cli.command
 
-import activemq.cli.ActiveMQCLI
-import activemq.cli.command.CommandsTests._
-import activemq.cli.util.Console._
 import java.io.File
-import org.junit.After
-import org.junit.AfterClass
+
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.AfterClass
 import org.springframework.shell.Bootstrap
 import org.springframework.shell.core.CommandResult
 import org.springframework.shell.core.JLineShellComponent
 
-class CommandsTests {
-
-}
-
 object CommandsTests {
 
   System.setProperty("config.file", "./src/test/resources/activemq-cli-test.config")
-  val shell = new Bootstrap().getJLineShellComponent()
 
-  @BeforeClass
-  def beforeClass() = {
+  def createShell(): JLineShellComponent = {
+    new Bootstrap().getJLineShellComponent()
+  }
+
+  def startAndConnectToEmbeddedBroker(shell: JLineShellComponent): Unit = {
     assertTrue(shell.executeCommand("start-embedded-broker").isSuccess)
     assertTrue(shell.executeCommand("connect --broker test").isSuccess)
   }
 
-  @AfterClass
-  def afterClass() = {
+  def stopEmbeddedBroker(shell: JLineShellComponent): Unit = {
     assertTrue(shell.executeCommand("stop-embedded-broker").isSuccess)
   }
 
