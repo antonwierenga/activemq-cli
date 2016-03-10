@@ -47,20 +47,20 @@ class MessageCommandsTests {
   }
 
   @Test
-  def testSaveMessageFileAlreadyExists = {
-    val messageFile = File.createTempFile("MessageCommandsTests_testSaveMessageFileAlreadyExists", ".xml")
-    try assertEquals(warn(s"File '${messageFile.getAbsolutePath}' already exists"), shell.executeCommand(s"save-messages --queue testQueue --file ${messageFile.getAbsolutePath}").getResult)
+  def testExportMessageFileAlreadyExists = {
+    val messageFile = File.createTempFile("MessageCommandsTests_testExportMessageFileAlreadyExists", ".xml")
+    try assertEquals(warn(s"File '${messageFile.getAbsolutePath}' already exists"), shell.executeCommand(s"export-messages --queue testQueue --file ${messageFile.getAbsolutePath}").getResult)
     finally messageFile.delete
   }
 
   @Test
-  def testSendAndSaveInlineMessage = {
+  def testSendAndExportInlineMessage = {
     assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --body testMessage").getResult)
     assertEquals(info("Messages listed: 1"), shell.executeCommand("list-messages --queue testQueue").getResult)
 
-    val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
+    val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndExportMessage")
     try {
-      assertEquals(info(s"Messages saved to $messageFilePath: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
+      assertEquals(info(s"Messages exported to $messageFilePath: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertTrue((xml \ "jms-message" \ "header" \ "correlation-id").isEmpty)
@@ -77,13 +77,13 @@ class MessageCommandsTests {
   }
 
   @Test
-  def testSendAndSaveInlineMessageAllHeadersProvided = {
+  def testSendAndExportInlineMessageAllHeadersProvided = {
     assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --correlation-id testCorrelationId --delivery-mode NON_PERSISTENT --time-to-live 2000 --priority 1 --body testMessage").getResult)
     assertEquals(info("Messages listed: 1"), shell.executeCommand("list-messages --queue testQueue").getResult)
 
-    val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndSaveMessage")
+    val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndExportMessage")
     try {
-      assertEquals(info(s"Messages saved to $messageFilePath: 1"), shell.executeCommand(s"save-messages --queue testQueue --file $messageFilePath").getResult)
+      assertEquals(info(s"Messages exported to $messageFilePath: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertEquals("testCorrelationId", (xml \ "jms-message" \ "header" \ "correlation-id") text)
@@ -113,7 +113,7 @@ class MessageCommandsTests {
   def testAvailabilityIndicators: Unit = {
     assertTrue(shell.executeCommand("disconnect").isSuccess)
     try {
-      List("move-messages", "copy-messages", "list-messages", "send-message", "save-messages").map(command ⇒ {
+      List("move-messages", "copy-messages", "list-messages", "send-message", "export-messages").map(command ⇒ {
         assertCommandFailed(shell.executeCommand(command))
       })
     } finally {

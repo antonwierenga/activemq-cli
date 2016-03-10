@@ -17,7 +17,9 @@
 package activemq.cli.util
 
 import com.typesafe.config.Config
+import java.util.Date
 import java.util.Locale
+import java.text.SimpleDateFormat
 import javax.jms.Message
 import javax.jms.TextMessage
 import scala.collection.JavaConversions._
@@ -46,7 +48,7 @@ object Implicits {
 
     val prettyPrinter = new scala.xml.PrettyPrinter(80, 2) //scalastyle:ignore
 
-    def toXML: String = {
+    def toXML(timestampFormat: Option[String] = None): String = {
 
       val addOptional = (condition: Boolean, xml: scala.xml.Elem) ⇒ if (condition) xml else scala.xml.NodeSeq.Empty
 
@@ -60,7 +62,12 @@ object Implicits {
                                <priority>{ message.getJMSPriority }</priority>
                                <redelivered>{ message.getJMSRedelivered }</redelivered>
                                { addOptional(Option(message.getJMSReplyTo).isDefined, <reply-to>{ message.getJMSReplyTo }</reply-to>) }
-                               <timestamp>{ message.getJMSTimestamp }</timestamp>
+                               <timestamp>{
+                                 timestampFormat match {
+                                   case Some(matched)⇒ new SimpleDateFormat(matched).format(new Date(message.getJMSTimestamp))
+                                   case _⇒ message.getJMSTimestamp
+                                 }
+                               }</timestamp>
                                { addOptional(Option(message.getJMSType).isDefined, <type>{ message.getJMSType }</type>) }
                              </header>
                              {

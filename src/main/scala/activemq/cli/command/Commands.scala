@@ -33,6 +33,11 @@ import org.apache.activemq.broker.jmx.BrokerViewMBean
 import org.springframework.shell.support.table.Table
 import org.springframework.shell.support.table.TableHeader
 import scala.tools.jline.console.ConsoleReader
+import org.apache.activemq.broker.jmx.QueueViewMBean
+import java.text.SimpleDateFormat
+import javax.jms.Message
+import java.util.Date
+import java.util.UUID
 
 abstract class Commands extends PrintStackTraceExecutionProcessor {
 
@@ -51,7 +56,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     ).filter(_ != None).mkString(" ")
   }
 
-  def confirm(force: String): Unit = {
+  def confirm(force: String = "no"): Unit = {
     force match {
       case "yes" ⇒ // skip confirmation
       case _ ⇒
@@ -166,5 +171,34 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
       case _ ⇒
         "No Broker set"
     }
+  }
+
+  def withEveryMirrorQueueMessage(queue: String, selector: String, regex: String, message: String, callback: (Message) ⇒ Unit): String = {
+    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+      var callbacks = 0
+      val mirrorQueue = getNewMirrorQueue(queue)
+      val messagesCopied = MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, queue),
+        classOf[QueueViewMBean], true)
+        .copyMatchingMessagesTo(selector, mirrorQueue)
+      withSession((session: Session) ⇒ {
+        val destination = session.createQueue(queue);
+        val messageConsumer = session.createConsumer(session.createQueue(mirrorQueue))
+        var received = 0
+        for (received ← 1 to messagesCopied) {
+          val message = messageConsumer.receive()
+          message.setJMSDestination(destination)
+          if (message.textMatches(regex)) {
+            callback(message)
+            callbacks += 1
+          }
+        }
+      })
+      brokerViewMBean.removeQueue(mirrorQueue)
+      info(s"$message: $callbacks")
+    })
+  }
+
+  def getNewMirrorQueue(queue: String): String = {
+    s"activemq-cli.$queue.mirror.${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.${UUID.randomUUID().toString()}"
   }
 }

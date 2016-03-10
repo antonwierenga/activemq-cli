@@ -48,7 +48,7 @@ class MessageCommands extends Commands {
   val JMSDeliveryMode = ("JMSDeliveryMode", "delivery-mode")
   val TimeToLive = ("timeToLive", "time-to-live")
 
-  @CliAvailabilityIndicator(Array("move-messages", "copy-messages", "list-messages", "send-message", "save-messages"))
+  @CliAvailabilityIndicator(Array("move-messages", "copy-messages", "list-messages", "send-message", "export-messages"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("move-messages"), help = "Moves messages between queues")
@@ -143,12 +143,12 @@ class MessageCommands extends Commands {
     })
   }
 
-  @CliCommand(value = Array("save-messages"), help = "Saves messages to file")
-  def saveMessages(
+  @CliCommand(value = Array("export-messages"), help = "Exports messages to file")
+  def exportMessages(
     @CliOption(key = Array("queue"), mandatory = false, help = "The name of the queue") queue: String,
     @CliOption(key = Array("selector"), mandatory = false, help = "the jms message selector") selector: String,
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String,
-    @CliOption(key = Array("file"), mandatory = false, help = "The file that will used to save the messages in") file: String
+    @CliOption(key = Array("file"), mandatory = false, help = "The file that is used to save the messages in") file: String
   ): String = {
     if (file && new File(file).exists()) {
       warn(s"File '$file' already exists")
@@ -157,8 +157,8 @@ class MessageCommands extends Commands {
       val bufferedWriter = new BufferedWriter(new FileWriter(new File(messageFile)))
       try {
         bufferedWriter.write("<jms-messages>\n")
-        val result = withEveryMirrorQueueMessage(queue, selector, regex, s"Messages saved to $messageFile", (message: Message) ⇒ {
-          bufferedWriter.write(s"${message.toXML}\n")
+        val result = withEveryMirrorQueueMessage(queue, selector, regex, s"Messages exported to $messageFile", (message: Message) ⇒ {
+          bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n".replaceAll("(?m)^", "  "))
         })
         bufferedWriter.write("</jms-messages>\n")
         result
@@ -175,34 +175,7 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String
   ): String = {
     withEveryMirrorQueueMessage(queue, selector, regex, "Messages listed", (message: Message) ⇒ {
-      println(info(s"${message.toXML}\n")) //scalastyle:ignore
+      println(info(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n")) //scalastyle:ignore
     })
-  }
-
-  def withEveryMirrorQueueMessage(queue: String, selector: String, regex: String, message: String, callback: (Message) ⇒ Unit): String = {
-    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      var callbacks = 0
-      val mirrorQueue = getNewMirrorQueue(queue)
-      val messagesCopied = MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, queue),
-        classOf[QueueViewMBean], true)
-        .copyMatchingMessagesTo(selector, mirrorQueue)
-      withSession((session: Session) ⇒ {
-        val messageConsumer = session.createConsumer(session.createQueue(mirrorQueue))
-        var received = 0
-        for (received ← 1 to messagesCopied) {
-          val message = messageConsumer.receive()
-          if (message.textMatches(regex)) {
-            callback(message)
-            callbacks += 1
-          }
-        }
-      })
-      brokerViewMBean.removeQueue(mirrorQueue)
-      info(s"$message: $callbacks")
-    })
-  }
-
-  def getNewMirrorQueue(queue: String): String = {
-    s"activemq-cli.$queue.mirror.${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.${UUID.randomUUID().toString()}"
   }
 }

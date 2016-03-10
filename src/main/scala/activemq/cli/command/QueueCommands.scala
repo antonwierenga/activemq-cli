@@ -36,6 +36,7 @@ class QueueCommands extends Commands {
 
   @CliCommand(value = Array("add-queue"), help = "Adds a queue")
   def addQueue(@CliOption(key = Array("name"), mandatory = true, help = "The name of the queue") name: String): String = {
+    
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       validateQueueNotExists(brokerViewMBean, name)
       brokerViewMBean.addQueue(name)
