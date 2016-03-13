@@ -39,7 +39,7 @@ import javax.jms.Message
 @Component
 class BrokerCommands extends Commands {
 
-  @CliAvailabilityIndicator(Array("info", "disconnect", "backup"))
+  @CliAvailabilityIndicator(Array("info", "disconnect", "export-broker", "import-to-broker"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("info"), help = "Displays broker info")
@@ -60,6 +60,43 @@ class BrokerCommands extends Commands {
   @CliCommand(value = Array("export-broker"), help = "Exports topics, queues and messages")
   def exportBroker(
     @CliOption(key = Array("file"), mandatory = false, help = "The file that will used to for the export") file: String
+  ): String = {
+    val backupFile = Option(file).getOrElse(s"backup_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
+    if (new File(backupFile).exists()) {
+      warn(s"File '$file' already exists")
+    } else {
+      val bufferedWriter = new BufferedWriter(new FileWriter(new File(backupFile)))
+      try {
+        bufferedWriter.write("<broker>\n")
+        val result = withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+          brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter.write(s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""))
+          brokerViewMBean.getQueues.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ {
+            var totalMessages = 0
+            withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), null, null, "", (message: Message) ⇒ {
+              totalMessages += 1
+              if (totalMessages == 1) bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}">\n""")
+              bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n".replaceAll("(?m)^", "    "))
+            })
+
+            if (totalMessages == 0) {
+              bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}"/>\n""")
+            } else {
+              bufferedWriter.write(s"  </queue>\n")
+            }
+          })
+          "Export saved"
+        })
+        bufferedWriter.write("</broker>\n")
+        result
+      } finally {
+        bufferedWriter.close
+      }
+    }
+  }
+
+  @CliCommand(value = Array("import-to-broker"), help = "Imports topics, queues and messages")
+  def importBroker(
+    @CliOption(key = Array("file"), mandatory = false, help = "The file that will be imported") file: String
   ): String = {
     val backupFile = Option(file).getOrElse(s"backup_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
     if (new File(backupFile).exists()) throw new IllegalArgumentException(s"File '$file' already exists")
