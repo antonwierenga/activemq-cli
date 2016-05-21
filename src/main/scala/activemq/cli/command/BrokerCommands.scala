@@ -69,13 +69,16 @@ class BrokerCommands extends Commands {
       try {
         bufferedWriter.write("<broker>\n")
         val result = withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-          brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter.write(s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""))
+          brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter.write(
+            s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""
+          ))
           brokerViewMBean.getQueues.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ {
             var totalMessages = 0
-            withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), null, null, "", (message: Message) ⇒ {
+            withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), None, None, "", (message: Message) ⇒ {
               totalMessages += 1
               if (totalMessages == 1) bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}">\n""")
-              bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n".replaceAll("(?m)^", "    "))
+              bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n"
+                .replaceAll("(?m)^", "    "))
             })
 
             if (totalMessages == 0) {
@@ -104,13 +107,15 @@ class BrokerCommands extends Commands {
     try {
       bufferedWriter.write("<broker>\n")
       val result = withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-        brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter.write(s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""))
+        brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter
+          .write(s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""))
         brokerViewMBean.getQueues.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ {
           var totalMessages = 0
-          withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), null, null, "", (message: Message) ⇒ {
+          withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), None, None, "", (message: Message) ⇒ {
             totalMessages += 1
             if (totalMessages == 1) bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}">\n""")
-            bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n".replaceAll("(?m)^", "    "))
+            bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n"
+              .replaceAll("(?m)^", "    "))
           })
 
           if (totalMessages == 0) {
