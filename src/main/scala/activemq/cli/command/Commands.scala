@@ -173,13 +173,13 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     }
   }
 
-  def withEveryMirrorQueueMessage(queue: String, selector: String, regex: String, message: String, callback: (Message) ⇒ Unit): String = {
+  def withEveryMirrorQueueMessage(queue: String, selector: Option[String], regex: Option[String], message: String, callback: (Message) ⇒ Unit): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       var callbacks = 0
       val mirrorQueue = getNewMirrorQueue(queue)
       val messagesCopied = MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, queue),
         classOf[QueueViewMBean], true)
-        .copyMatchingMessagesTo(selector, mirrorQueue)
+        .copyMatchingMessagesTo(selector.getOrElse(null), mirrorQueue) //scalastyle:ignore
       withSession((session: Session) ⇒ {
         val destination = session.createQueue(queue);
         val messageConsumer = session.createConsumer(session.createQueue(mirrorQueue))
@@ -187,7 +187,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
         for (received ← 1 to messagesCopied) {
           val message = messageConsumer.receive()
           message.setJMSDestination(destination)
-          if (message.textMatches(regex)) {
+          if (message.textMatches(regex.getOrElse(null))) { //scalastyle:ignore
             callback(message)
             callbacks += 1
           }
