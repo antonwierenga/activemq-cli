@@ -39,7 +39,7 @@ import javax.jms.Message
 @Component
 class BrokerCommands extends Commands {
 
-  @CliAvailabilityIndicator(Array("info", "disconnect", "export-broker", "import-to-broker"))
+  @CliAvailabilityIndicator(Array("info", "disconnect", "export", "import"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("info"), help = "Displays broker info")
@@ -57,7 +57,7 @@ class BrokerCommands extends Commands {
     })
   }
 
-  @CliCommand(value = Array("export-broker"), help = "Exports topics, queues and messages")
+  @CliCommand(value = Array("export"), help = "Exports topics, queues and messages")
   def exportBroker(
     @CliOption(key = Array("file"), mandatory = false, help = "The file that will used to for the export") file: String
   ): String = {
@@ -94,7 +94,7 @@ class BrokerCommands extends Commands {
     }
   }
 
-  @CliCommand(value = Array("import-to-broker"), help = "Imports topics, queues and messages")
+  @CliCommand(value = Array("import"), help = "Imports topics, queues and messages")
   def importBroker(
     @CliOption(key = Array("file"), mandatory = false, help = "The file that will be imported") file: String
   ): String = {
@@ -142,9 +142,9 @@ class BrokerCommands extends Commands {
   ): String = {
 
     try {
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker")) throw new IllegalArgumentException(s"Alias '$pBroker' not found in ${new File(System.getProperty("ActiveMQCLI.Config.file")).getCanonicalPath}") //scalastyle:ignore
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.jmxurl")) throw new IllegalArgumentException(s"jmxurl not found for Alias '$pBroker' in ${new File(System.getProperty("ActiveMQCLI.Config.file")).getCanonicalPath}") //scalastyle:ignore
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.amqurl")) throw new IllegalArgumentException(s"amqurl not found for Alias '$pBroker' in ${new File(System.getProperty("ActiveMQCLI.Config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker")) throw new IllegalArgumentException(s"Broker '$pBroker' not found in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.jmxurl")) throw new IllegalArgumentException(s"jmxurl not found for broker '$pBroker' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.amqurl")) throw new IllegalArgumentException(s"amqurl not found for broker '$pBroker' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
 
       val username = if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.username")) {
         ActiveMQCLI.Config.getString(s"broker.$pBroker.username")
