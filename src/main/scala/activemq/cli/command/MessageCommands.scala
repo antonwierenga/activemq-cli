@@ -95,57 +95,61 @@ class MessageCommands extends Commands {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       if (!file && !body) throw new IllegalArgumentException("Either --body or --file must be specified, but not both")
       if ((!queue && !topic) || (queue && topic)) throw new IllegalArgumentException("Either --queue or --topic must be specified, but not both")
-      if (file && !new File(file).exists) throw new IllegalArgumentException(s"File '$file}' does not exist")
-      if (file && (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive || times > 1)) {
-        throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed")
+      if (file) {
+        if (!new File(file).exists) throw new IllegalArgumentException(s"File '$file' does not exist")
+        try {
+          if ((XML.loadFile(file) \ "jms-message").isEmpty) throw new IllegalArgumentException(s"No message found in '$file'")
+        } catch {
+          case spe: org.xml.sax.SAXParseException ⇒ throw new IllegalArgumentException(
+            s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}")
+        }
+        if (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive || times > 1) {
+          throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed")
+        }
       }
 
-      def sentToQueueOrTopic(headers: java.util.HashMap[String, Any], body: String) = {
+      def sentToQueueOrTopic(headers: java.util.Map[String, String], body: String) = {
         if (queue) {
           MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getQueueObjectName(brokerViewMBean, queue), classOf[QueueViewMBean], true)
-            .sendTextMessage(headers, body)
+            .sendTextMessage(headers, body, ActiveMQCLI.broker.get.username, ActiveMQCLI.broker.get.password)
         } else {
           MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, getTopicObjectName(brokerViewMBean, topic), classOf[TopicViewMBean], true)
-            .sendTextMessage(headers, body)
+            .sendTextMessage(headers, body, ActiveMQCLI.broker.get.username, ActiveMQCLI.broker.get.password)
         }
       }
 
       var totalSent = 0
       if (body) {
-        val headers = new java.util.HashMap[String, Any]()
-        for ((key, value) ← Map(JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive, JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)) {
-          if (Option(value).isDefined) headers.put(key._1, value)
+        val headers = new java.util.HashMap[String, String]()
+        for ((key, value) ← Map(JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
+          JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)) {
+          if (Option(value).isDefined) headers.put(key._1, value.toString)
         }
         for (i ← (1 to times)) yield {
           sentToQueueOrTopic(headers, body)
           totalSent += 1
         }
       } else { // file
-        try {
-          val xml = XML.loadFile(file)
-          (xml \ "jms-message").map(xmlMessage ⇒ {
-            val headers = new java.util.HashMap[String, Any]()
-            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode).map(header ⇒ {
-              if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
-            })
-            if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode)
-            (xmlMessage \ "properties" \ "property").map(property ⇒ headers.put((property \ "name").text, (property \ "value").text))
-            sentToQueueOrTopic(headers, (xmlMessage \ "body").text)
-            totalSent += 1
+        (XML.loadFile(file) \ "jms-message").map(xmlMessage ⇒ {
+          val headers = new java.util.HashMap[String, String]()
+          Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode).map(header ⇒ {
+            if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
           })
-        } catch {
-          case spe: org.xml.sax.SAXParseException ⇒ throw new IllegalArgumentException(s"Error in XML document line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}")
-        }
+          if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode.toString)
+          (xmlMessage \ "properties" \ "property").map(property ⇒ headers.put((property \ "name").text, (property \ "value").text))
+          sentToQueueOrTopic(headers, (xmlMessage \ "body").text)
+          totalSent += 1
+        })
       }
       val duration = System.currentTimeMillis - start
       formatDuration(duration)
-      info(s"Messages sent to ${if (queue) s"queue '$queue'" else s"topic '$topic'"}: $totalSent${if (duration > 1000) s" (${formatDuration(duration)})" else ""}")
+      info(s"Messages sent to ${if (queue) s"queue '$queue'" else s"topic '$topic'"}: $totalSent${if (duration > 1000) s" (${formatDuration(duration)})" else ""}") //scalastyle:ignore
     })
   }
 
   @CliCommand(value = Array("export-messages"), help = "Exports messages to file")
   def exportMessages(
-    @CliOption(key = Array("queue"), mandatory = false, help = "The name of the queue") queue: String,
+    @CliOption(key = Array("queue"), mandatory = true, help = "The name of the queue") queue: String,
     @CliOption(key = Array("selector"), mandatory = false, help = "the jms message selector") selector: String,
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String,
     @CliOption(key = Array("file"), mandatory = false, help = "The file that is used to save the messages in") file: String
@@ -157,7 +161,7 @@ class MessageCommands extends Commands {
       val bufferedWriter = new BufferedWriter(new FileWriter(new File(messageFile)))
       try {
         bufferedWriter.write("<jms-messages>\n")
-        val result = withEveryMirrorQueueMessage(queue, selector, regex, s"Messages exported to $messageFile", (message: Message) ⇒ {
+        val result = withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), s"Messages exported to $messageFile", (message: Message) ⇒ {
           bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n".replaceAll("(?m)^", "  "))
         })
         bufferedWriter.write("</jms-messages>\n")
@@ -174,7 +178,7 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("selector"), mandatory = false, help = "the JMS message selector") selector: String,
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String
   ): String = {
-    withEveryMirrorQueueMessage(queue, selector, regex, "Messages listed", (message: Message) ⇒ {
+    withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), "Messages listed", (message: Message) ⇒ {
       println(info(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n")) //scalastyle:ignore
     })
   }

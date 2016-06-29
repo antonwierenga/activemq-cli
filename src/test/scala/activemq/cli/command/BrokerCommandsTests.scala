@@ -57,7 +57,7 @@ class BrokerCommandsTests {
   def testAvailabilityIndicators: Unit = {
     assertTrue(shell.executeCommand("disconnect").isSuccess)
     try {
-      List("info", "disconnect", "export-broker", "import-to-broker").map(command ⇒ {
+      List("info", "disconnect", "export-broker").map(command ⇒ {
         assertCommandFailed(shell.executeCommand(command))
       })
     } finally {

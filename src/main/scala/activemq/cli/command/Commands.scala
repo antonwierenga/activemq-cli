@@ -124,7 +124,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     brokerViewMBean.getTopics.filter(objectName ⇒
       getDestinationKeyProperty(objectName).equals(topic)).headOption.getOrElse({
       brokerViewMBean.addTopic(topic)
-      validateQueueExists(brokerViewMBean, topic)
+      validateTopicExists(brokerViewMBean, topic)
     })
   }
 

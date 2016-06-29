@@ -37,10 +37,34 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("0.0.1" → List(""))
+  lazy val ReleaseNotes = Map("0.0.1" → List(
+    "New shell command 'add-queue'",
+    "New shell command 'add-topic'",
+    "New shell command 'connect'",
+    "New shell command 'copy-messages '",
+    "New shell command 'disconnect'",
+    "New shell command 'export'",
+    "New shell command 'export-messages'",
+    "New shell command 'list-messages'",
+    "New shell command 'move-messages'",
+    "New shell command 'purge-all-queues'",
+    "New shell command 'purge-queue'",
+    "New shell command 'queues'",
+    "New shell command 'release-notes'",
+    "New shell command 'remove-all-queues'",
+    "New shell command 'remove-all-topics'",
+    "New shell command 'remove-queue'",
+    "New shell command 'remove-topic'",
+    "New shell command 'send-message'",
+    "New shell command 'start-embedded-broker'",
+    "New shell command 'stop-embedded-broker'",
+    "New shell command 'topics'"
+  ))
+
   lazy val ApplicationPath: String = s"${new File(classOf[ActiveMQCLI].getProtectionDomain.getCodeSource.getLocation.getFile).getParent}/.."
 
   System.setProperty("config.file", s"$ApplicationPath/conf/activemq-cli.config")
+
   lazy val Config: Config = ConfigFactory.load
 
   var broker: Option[Broker] = None

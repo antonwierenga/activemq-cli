@@ -39,7 +39,7 @@ import javax.jms.Message
 @Component
 class BrokerCommands extends Commands {
 
-  @CliAvailabilityIndicator(Array("info", "disconnect", "export", "import"))
+  @CliAvailabilityIndicator(Array("info", "disconnect", "export-broker"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("info"), help = "Displays broker info")
@@ -57,7 +57,7 @@ class BrokerCommands extends Commands {
     })
   }
 
-  @CliCommand(value = Array("export"), help = "Exports topics, queues and messages")
+  @CliCommand(value = Array("export-broker"), help = "Exports topics, queues and messages")
   def exportBroker(
     @CliOption(key = Array("file"), mandatory = false, help = "The file that will used to for the export") file: String
   ): String = {
@@ -87,49 +87,13 @@ class BrokerCommands extends Commands {
               bufferedWriter.write(s"  </queue>\n")
             }
           })
-          "Export saved"
+          s"Broker exported to $backupFile"
         })
         bufferedWriter.write("</broker>\n")
         result
       } finally {
         bufferedWriter.close
       }
-    }
-  }
-
-  @CliCommand(value = Array("import"), help = "Imports topics, queues and messages")
-  def importBroker(
-    @CliOption(key = Array("file"), mandatory = false, help = "The file that will be imported") file: String
-  ): String = {
-    val backupFile = Option(file).getOrElse(s"backup_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
-    if (new File(backupFile).exists()) throw new IllegalArgumentException(s"File '$file' already exists")
-    val bufferedWriter = new BufferedWriter(new FileWriter(new File(backupFile)))
-    try {
-      bufferedWriter.write("<broker>\n")
-      val result = withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-        brokerViewMBean.getTopics.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ bufferedWriter
-          .write(s"""  <topic name="${getDestinationKeyProperty(objectName)}"/>\n"""))
-        brokerViewMBean.getQueues.sortWith(getDestinationKeyProperty(_) < getDestinationKeyProperty(_)).map(objectName ⇒ {
-          var totalMessages = 0
-          withEveryMirrorQueueMessage(getDestinationKeyProperty(objectName), None, None, "", (message: Message) ⇒ {
-            totalMessages += 1
-            if (totalMessages == 1) bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}">\n""")
-            bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.export-broker.timestamp-format"))}\n"
-              .replaceAll("(?m)^", "    "))
-          })
-
-          if (totalMessages == 0) {
-            bufferedWriter.write(s"""  <queue name="${getDestinationKeyProperty(objectName)}"/>\n""")
-          } else {
-            bufferedWriter.write(s"  </queue>\n")
-          }
-        })
-        "Export saved"
-      })
-      bufferedWriter.write("</broker>\n")
-      result
-    } finally {
-      bufferedWriter.close
     }
   }
 
@@ -141,9 +105,7 @@ class BrokerCommands extends Commands {
 
   @CliCommand(value = Array("connect"), help = "Connects to a broker")
   def connect(
-    @CliOption(key = Array("broker"), mandatory = true, help = "The Broker Alias") pBroker: String,
-    @CliOption(key = Array("username"), mandatory = false, help = "The JMX username") username: String,
-    @CliOption(key = Array("password"), mandatory = false, help = "The JMX password") password: String
+    @CliOption(key = Array("broker"), mandatory = true, help = "The Broker Alias") pBroker: String
   ): String = {
 
     try {

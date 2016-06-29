@@ -110,6 +110,14 @@ class MessageCommandsTests {
   }
 
   @Test
+  def testSendInlineMessageToTopic = {
+    assertEquals(info("Topic 'VirtualTopic.testTopic' added"), shell.executeCommand("add-topic --name VirtualTopic.testTopic").getResult)
+    assertEquals(info("Queue 'Consumer.testQueue.VirtualTopic.testTopic' added"), shell.executeCommand("add-queue --name Consumer.testQueue.VirtualTopic.testTopic").getResult)
+    assertEquals(info("Messages sent to topic 'VirtualTopic.testTopic': 1"), shell.executeCommand("send-message --topic VirtualTopic.testTopic --body testMessage").getResult)
+    assertEquals(info("Messages listed: 1"), shell.executeCommand("list-messages --queue Consumer.testQueue.VirtualTopic.testTopic").getResult)
+  }
+
+  @Test
   def testAvailabilityIndicators: Unit = {
     assertTrue(shell.executeCommand("disconnect").isSuccess)
     try {
