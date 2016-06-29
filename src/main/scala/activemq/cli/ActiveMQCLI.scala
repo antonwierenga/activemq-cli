@@ -43,7 +43,7 @@ object ActiveMQCLI extends App {
     "New shell command 'connect'",
     "New shell command 'copy-messages '",
     "New shell command 'disconnect'",
-    "New shell command 'export'",
+    "New shell command 'export-broker'",
     "New shell command 'export-messages'",
     "New shell command 'list-messages'",
     "New shell command 'move-messages'",
