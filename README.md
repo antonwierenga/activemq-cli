@@ -90,8 +90,10 @@ Exports queues, topics and messages to file.
 
 Example:`export-broker --file broker.xml`
 
+*For this command activemq-cli creates temporary mirror queues to ensure all messages are exported.*
+
 ### export-messages
-Exports messages.
+Exports messages to file.
 
 ##### Parameters:
   - file
@@ -100,6 +102,8 @@ Exports messages.
   - regex (export messages whose body match the regex)
  
 Example:`export-messages --queue foo`
+
+*For this command activemq-cli creates a temporary mirror queue to ensure all messages are exported.*
 
 ### list-messages
 Lists messages.
@@ -110,6 +114,8 @@ Lists messages.
   - regex (lists messages whose body match the regex)
  
 Example:`list-messages --queue foo`
+
+*For this command activemq-cli creates a temporary mirror queue to ensure all messages are listed.*
 
 ### move-messages
 Moves messages from a queue to another queue.
