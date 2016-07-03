@@ -41,6 +41,7 @@ To connect to a broker that is configured in `activemq-cli-x.x.x/conf/activemq-c
 
 `connect --broker dev`
 
+Below is a list of commands that activemq-cli supports.
 
 ### add-queue
 Adds a queue.
