@@ -219,7 +219,17 @@ Example file:
         <value>1</value>
       </property>        
     </properties>      
-    <body>Message 3</body>
+    <body><![CDATA[<?xml version="1.0"?>
+<catalog>
+   <book id="1">
+      <author>Basil, Matthew</author>
+      <title>XML Developer's Guide</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2002-10-01</publish_date>
+      <description>An in-depth look at creating applications with XML.</description>
+   </book>
+</catalog>]]></body>
   </jms-message>  
 </jms-messages>
 ```
