@@ -113,7 +113,9 @@ Lists messages.
   - selector (lists messages that match the (JMS) selector)
   - regex (lists messages whose body match the regex)
  
-Example:`list-messages --queue foo`
+Example 1:`list-messages --queue foo`
+
+Example 2:`list-messages --queue foo --selector "JMSCorrelationID = '12345'"`
 
 *For this command activemq-cli creates a temporary mirror queue to ensure all messages are listed.*
 
