@@ -105,6 +105,11 @@ Example:`export-messages --queue foo`
 
 *For this command activemq-cli creates a temporary mirror queue to ensure all messages are exported.*
 
+### info
+Displays information (e.g. version, uptime, total number of queues/topics/messages) about the broker 
+
+Example:`info`
+
 ### list-messages
 Lists messages.
 
