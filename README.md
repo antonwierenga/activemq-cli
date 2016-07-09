@@ -37,9 +37,10 @@ To enter the activemq-cli shell run `activemq-cli-x.x.x/bin/activemq-cli` or `ac
 
 activemq-cli provides tab completion to speed up typing commands, to see which commands are available and what parameters are supported.
 
-To connect to a broker that is configured in `activemq-cli-x.x.x/conf/activemq-cli.config`:
+*In addition to executing commands in the shell, activemq-cli also supports executing a file containing commands:*
+`activemq-cli --cmdfile my_commands.txt`
 
-`connect --broker dev`
+To connect to a broker that is configured in `activemq-cli-x.x.x/conf/activemq-cli.config`: `connect --broker dev`
 
 Below is a list of commands that activemq-cli supports.
 
