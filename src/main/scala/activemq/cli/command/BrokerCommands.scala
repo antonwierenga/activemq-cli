@@ -52,8 +52,8 @@ class BrokerCommands extends Commands {
 
       renderTable(List(List(brokerViewMBean.getBrokerId, brokerViewMBean.getBrokerName, brokerViewMBean.getBrokerVersion,
         s"${brokerViewMBean.getMemoryPercentUsage}%", s"${brokerViewMBean.getStorePercentUsage}%", brokerViewMBean.getUptime, queues.size,
-        brokerViewMBean.getTopics.size, messageTotal)), List("Broker ID", "Broker Name", "Broker Version", "Memory Limit used",
-        "Store Limit used", "Uptime", "Queues", "Topics", "Messages"))
+        brokerViewMBean.getTopics.size, messageTotal, brokerViewMBean.getTotalConsumerCount)), List("Broker ID", "Broker Name", "Broker Version", "Memory Limit used",
+        "Store Limit used", "Uptime", "Queues", "Topics", "Messages", "Consumers"))
     })
   }
 
@@ -63,7 +63,7 @@ class BrokerCommands extends Commands {
   ): String = {
     val backupFile = Option(file).getOrElse(s"backup_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
     if (new File(backupFile).exists()) {
-      warn(s"File '$file' already exists")
+      warn(s"File '${new File(backupFile).getCanonicalPath()}' already exists")
     } else {
       val bufferedWriter = new BufferedWriter(new FileWriter(new File(backupFile)))
       try {
@@ -87,7 +87,7 @@ class BrokerCommands extends Commands {
               bufferedWriter.write(s"  </queue>\n")
             }
           })
-          s"Broker exported to $backupFile"
+          s"Broker exported to ${new File(backupFile).getCanonicalPath()}"
         })
         bufferedWriter.write("</broker>\n")
         result

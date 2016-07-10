@@ -101,7 +101,8 @@ class MessageCommands extends Commands {
           if ((XML.loadFile(file) \ "jms-message").isEmpty) throw new IllegalArgumentException(s"No message found in '$file'")
         } catch {
           case spe: org.xml.sax.SAXParseException ⇒ throw new IllegalArgumentException(
-            s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}")
+            s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}"
+          )
         }
         if (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive || times > 1) {
           throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed")
@@ -121,8 +122,10 @@ class MessageCommands extends Commands {
       var totalSent = 0
       if (body) {
         val headers = new java.util.HashMap[String, String]()
-        for ((key, value) ← Map(JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
-          JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)) {
+        for (
+          (key, value) ← Map(JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
+            JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)
+        ) {
           if (Option(value).isDefined) headers.put(key._1, value.toString)
         }
         for (i ← (1 to times)) yield {
@@ -161,7 +164,7 @@ class MessageCommands extends Commands {
       val bufferedWriter = new BufferedWriter(new FileWriter(new File(messageFile)))
       try {
         bufferedWriter.write("<jms-messages>\n")
-        val result = withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), s"Messages exported to $messageFile", (message: Message) ⇒ {
+        val result = withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), s"Messages exported to ${new File(messageFile).getCanonicalPath()}", (message: Message) ⇒ {
           bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n".replaceAll("(?m)^", "  "))
         })
         bufferedWriter.write("</jms-messages>\n")

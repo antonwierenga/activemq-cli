@@ -37,7 +37,10 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("0.0.1" → List(
+  lazy val ReleaseNotes = Map("0.0.2" → List(
+    "Updated shell command 'export-messages': display export file full path",
+    "Updated shell command 'export-broker': display export file full path"
+  ), "0.0.1" → List(
     "New shell command 'add-queue'",
     "New shell command 'add-topic'",
     "New shell command 'connect'",
@@ -45,6 +48,7 @@ object ActiveMQCLI extends App {
     "New shell command 'disconnect'",
     "New shell command 'export-broker'",
     "New shell command 'export-messages'",
+    "New shell command 'info'",
     "New shell command 'list-messages'",
     "New shell command 'move-messages'",
     "New shell command 'purge-all-queues'",

@@ -49,7 +49,7 @@ class BrokerCommandsTests {
   @Test
   def testExportBrokerFileAlreadyExists = {
     val testExportBrokerFileAlreadyExists = File.createTempFile("MessageCommandsTests_testExportBrokerFileAlreadyExists", ".xml")
-    try assertEquals(warn(s"File '${testExportBrokerFileAlreadyExists.getAbsolutePath}' already exists"), shell.executeCommand(s"export-broker --file ${testExportBrokerFileAlreadyExists.getAbsolutePath}").getResult)
+    try assertEquals(warn(s"File '${testExportBrokerFileAlreadyExists.getCanonicalPath}' already exists"), shell.executeCommand(s"export-broker --file ${testExportBrokerFileAlreadyExists.getAbsolutePath}").getResult)
     finally testExportBrokerFileAlreadyExists.delete
   }
 

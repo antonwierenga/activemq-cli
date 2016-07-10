@@ -60,7 +60,7 @@ class MessageCommandsTests {
 
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndExportMessage")
     try {
-      assertEquals(info(s"Messages exported to $messageFilePath: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
+      assertEquals(info(s"Messages exported to ${new File(messageFilePath).getCanonicalPath()}: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertTrue((xml \ "jms-message" \ "header" \ "correlation-id").isEmpty)
@@ -83,7 +83,9 @@ class MessageCommandsTests {
 
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndExportMessage")
     try {
-      assertEquals(info(s"Messages exported to $messageFilePath: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
+      println("**********")
+      println(new File(messageFilePath).getCanonicalPath())
+      assertEquals(info(s"Messages exported to ${new File(messageFilePath).getCanonicalPath()}: 1"), shell.executeCommand(s"export-messages --queue testQueue --file $messageFilePath").getResult)
       val xml = XML.loadFile(messageFilePath)
       assertFalse((xml \ "jms-message" \ "header" \ "message-id").isEmpty)
       assertEquals("testCorrelationId", (xml \ "jms-message" \ "header" \ "correlation-id") text)

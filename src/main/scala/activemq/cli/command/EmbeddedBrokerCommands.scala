@@ -51,16 +51,23 @@ class EmbeddedBrokerCommands extends Commands {
       case Some(matched) if matched.isStarted ⇒
         warn("Embedded broker already started")
       case _ ⇒
-        embeddedBroker = Some(new BrokerService)
-        if (ActiveMQCLI.Config.hasPath(s"embedded-broker.datadir")) {
-          embeddedBroker.get.setDataDirectory(ActiveMQCLI.Config.getString("embedded-broker.datadir"))
-        } else {
-          embeddedBroker.get.setDataDirectory(s"$ApplicationPath/data/activemq-data")
+        try {
+          embeddedBroker = Some(new BrokerService)
+          if (ActiveMQCLI.Config.hasPath(s"embedded-broker.datadir")) {
+            embeddedBroker.get.setDataDirectory(ActiveMQCLI.Config.getString("embedded-broker.datadir"))
+          } else {
+            embeddedBroker.get.setDataDirectory(s"$ApplicationPath/data/activemq-data")
+          }
+          embeddedBroker.get.addConnector(ActiveMQCLI.Config.getString("embedded-broker.connector"))
+          embeddedBroker.get.getManagementContext.setConnectorPort(ActiveMQCLI.Config.getInt("embedded-broker.jmxport"));
+          embeddedBroker.get.start
+          info("Embedded broker started")
+        } catch {
+          case e: Exception ⇒ {
+            embeddedBroker = None
+            warn(s"Failed to start embedded broker: ${e.getMessage}")
+          }
         }
-        embeddedBroker.get.addConnector(ActiveMQCLI.Config.getString("embedded-broker.connector"))
-        embeddedBroker.get.getManagementContext.setConnectorPort(ActiveMQCLI.Config.getInt("embedded-broker.jmxport"));
-        embeddedBroker.get.start
-        info("Embedded broker started")
     }
   }
 
