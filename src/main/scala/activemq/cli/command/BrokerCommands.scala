@@ -21,6 +21,7 @@ import activemq.cli.domain.Broker
 import activemq.cli.util.Console._
 import activemq.cli.util.Implicits._
 import java.io.File
+import javax.jms.Session
 import javax.management.MBeanServerConnection
 import javax.management.MBeanServerInvocationHandler
 import org.apache.activemq.broker.jmx.BrokerViewMBean
@@ -128,6 +129,7 @@ class BrokerCommands extends Commands {
       ActiveMQCLI.broker = Option(new Broker(pBroker, ActiveMQCLI.Config.getString(s"broker.$pBroker.amqurl"),
         ActiveMQCLI.Config.getString(s"broker.$pBroker.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$pBroker.jmxname"), username, password))
 
+      withSession((session: Session) ⇒ {})
       withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
         info(s"Broker is set to '${ActiveMQCLI.broker.get.jmxurl}'")
       })
