@@ -1,7 +1,7 @@
 # activemq-cli
 Command-line interface utility to interact with the Apache ActiveMQ message broker using OpenWire/JMX.
 
-[![alt text](/youtube_screenshot.png)](https://www.youtube.com/watch?v=e_D6qGl-ZC8 "YouTube demo video")
+[![alt text](/activemq_demo.gif)](https://www.youtube.com/watch?v=e_D6qGl-ZC8 "YouTube demo video")
 
 ## Installation
 Download activemq-cli in the [release section](https://github.com/antonwierenga/activemq-cli/releases) of this repository.
