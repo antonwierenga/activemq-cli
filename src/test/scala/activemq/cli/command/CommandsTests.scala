@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Wierenga
+ * Copyright 2016 Anton Wierenga
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,4 +58,3 @@ object CommandsTests {
     assertNull(commandResult.getException)
   }
 }
-

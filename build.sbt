@@ -2,7 +2,7 @@ organization := "com.antonwierenga"
 
 name := "activemq-cli"
 
-version := "1.0.0"
+version := "0.0.2"
 
 scalaVersion := "2.11.6"
 
@@ -29,8 +29,8 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 import de.heikoseeberger.sbtheader.license.Apache2_0
 
 headers := Map(
-    "scala" -> Apache2_0("2015", "Anton Wierenga"),
-    "conf" -> Apache2_0("2015", "Anton Wierenga", "#")
+    "scala" -> Apache2_0("2016", "Anton Wierenga"),
+    "conf" -> Apache2_0("2016", "Anton Wierenga", "#")
 )
 
 enablePlugins(AutomateHeaderPlugin) 
