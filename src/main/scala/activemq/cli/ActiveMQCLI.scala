@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Wierenga
+ * Copyright 2016 Anton Wierenga
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import activemq.cli.domain.Broker
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import java.io.File
+import java.nio.file.Paths
 import java.rmi.RMISecurityManager
 import org.apache.activemq.broker.BrokerService
 import org.springframework.shell.Bootstrap
@@ -66,7 +67,7 @@ object ActiveMQCLI extends App {
     "New shell command 'topics'"
   ))
 
-  lazy val ApplicationPath: String = s"${new File(classOf[ActiveMQCLI].getProtectionDomain.getCodeSource.getLocation.getFile).getParent}/.."
+  lazy val ApplicationPath: String = s"${Paths.get(classOf[ActiveMQCLI].getProtectionDomain.getCodeSource.getLocation.toURI).toFile.getParentFile.getParentFile}"
 
   System.setProperty("config.file", s"$ApplicationPath/conf/activemq-cli.config")
 
