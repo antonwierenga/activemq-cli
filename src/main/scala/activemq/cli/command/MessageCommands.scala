@@ -17,6 +17,7 @@
 package activemq.cli.command
 
 import activemq.cli.ActiveMQCLI
+import activemq.cli.ActiveMQCLI.ApplicationOutputPath
 import activemq.cli.util.Console._
 import activemq.cli.util.Implicits._
 import collection.JavaConversions._
@@ -161,12 +162,19 @@ class MessageCommands extends Commands {
       warn(s"File '$file' already exists")
     } else {
       val messageFile = Option(file).getOrElse(s"${queue}_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
-      val bufferedWriter = new BufferedWriter(new FileWriter(new File(messageFile)))
+      val outputFile: File = Option(new File(messageFile).getParent) match {
+        case Some(parent) ⇒ new File(messageFile)
+        case _            ⇒ new File(ApplicationOutputPath, messageFile)
+      }
+
+      val bufferedWriter = new BufferedWriter(new FileWriter(outputFile))
       try {
         bufferedWriter.write("<jms-messages>\n")
-        val result = withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), s"Messages exported to ${new File(messageFile).getCanonicalPath()}", (message: Message) ⇒ {
-          bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n".replaceAll("(?m)^", "  "))
-        })
+        val result = withEveryMirrorQueueMessage(queue, Option(selector), Option(regex), s"Messages exported to ${outputFile.getCanonicalPath()}",
+          (message: Message) ⇒ {
+            bufferedWriter.write(s"${message.toXML(ActiveMQCLI.Config.getOptionalString("command.list-messages.timestamp-format"))}\n"
+              .replaceAll("(?m)^", "  "))
+          })
         bufferedWriter.write("</jms-messages>\n")
         result
       } finally {

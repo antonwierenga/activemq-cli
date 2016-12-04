@@ -67,9 +67,16 @@ object ActiveMQCLI extends App {
     "New shell command 'topics'"
   ))
 
-  lazy val ApplicationPath: String = s"${Paths.get(classOf[ActiveMQCLI].getProtectionDomain.getCodeSource.getLocation.toURI).toFile.getParentFile.getParentFile}"
+  lazy val ApplicationPath: File = new File(s"${
+    Paths.get(classOf[ActiveMQCLI].getProtectionDomain.getCodeSource.getLocation.toURI).toFile.getParentFile
+      .getParentFile
+  }")
 
-  System.setProperty("config.file", s"$ApplicationPath/conf/activemq-cli.config")
+  lazy val ApplicationOutputPath: File = new File(ApplicationPath, "output")
+
+  if (!ApplicationOutputPath.exists()) ApplicationOutputPath.mkdir()
+
+  System.setProperty("config.file", new File(ApplicationPath, "conf/activemq-cli.config").getPath)
 
   lazy val Config: Config = ConfigFactory.load
 

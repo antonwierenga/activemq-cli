@@ -88,7 +88,7 @@ class TopicCommands extends Commands {
       if (rows.size > 0) {
         renderTable(rows, headers)
       } else {
-        warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
+        warn(s"No topics found for broker '${ActiveMQCLI.broker.get.alias}'")
       }
     })
   }

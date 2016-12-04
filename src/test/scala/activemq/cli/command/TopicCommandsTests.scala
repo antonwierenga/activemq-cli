@@ -47,7 +47,7 @@ class TopicCommandsTests {
 
   @Test
   def testTopicsEmpty = {
-    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("topics --filter testTopic").getResult)
+    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("topics --filter testTopic").getResult)
   }
 
   @Test
@@ -66,7 +66,7 @@ class TopicCommandsTests {
   def testRemoveTopic = {
     assertEquals(info("Topic 'testTopic' added"), shell.executeCommand("add-topic --name testTopic").getResult)
     assertEquals(info("Topic 'testTopic' removed"), shell.executeCommand("remove-topic --name testTopic --force").getResult)
-    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("topics --filter testTopic").getResult)
+    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("topics --filter testTopic").getResult)
   }
 
   @Test
@@ -74,7 +74,7 @@ class TopicCommandsTests {
     assertEquals(info("Topic 'testTopic1' added"), shell.executeCommand("add-topic --name testTopic1").getResult)
     assertEquals(info("Topic 'testTopic2' added"), shell.executeCommand("add-topic --name testTopic2").getResult)
     assertEquals(info("Topics removed: 3"), shell.executeCommand("remove-all-topics --force").getResult)
-    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.jmxurl}'"), shell.executeCommand("topics --filter testTopic").getResult)
+    assertEquals(warn(s"No topics found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("topics --filter testTopic").getResult)
   }
 
   @Test

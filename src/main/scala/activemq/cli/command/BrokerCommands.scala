@@ -17,6 +17,7 @@
 package activemq.cli.command
 
 import activemq.cli.ActiveMQCLI
+import activemq.cli.ActiveMQCLI.ApplicationOutputPath
 import activemq.cli.domain.Broker
 import activemq.cli.util.Console._
 import activemq.cli.util.Implicits._
@@ -53,8 +54,8 @@ class BrokerCommands extends Commands {
 
       renderTable(List(List(brokerViewMBean.getBrokerId, brokerViewMBean.getBrokerName, brokerViewMBean.getBrokerVersion,
         s"${brokerViewMBean.getMemoryPercentUsage}%", s"${brokerViewMBean.getStorePercentUsage}%", brokerViewMBean.getUptime, queues.size,
-        brokerViewMBean.getTopics.size, messageTotal, brokerViewMBean.getTotalConsumerCount)), List("Broker ID", "Broker Name", "Broker Version", "Memory Limit used",
-        "Store Limit used", "Uptime", "Queues", "Topics", "Messages", "Consumers"))
+        brokerViewMBean.getTopics.size, messageTotal, brokerViewMBean.getTotalConsumerCount)), List("Broker ID", "Broker Name", "Broker Version",
+        "Memory Limit used", "Store Limit used", "Uptime", "Queues", "Topics", "Messages", "Consumers"))
     })
   }
 
@@ -66,7 +67,12 @@ class BrokerCommands extends Commands {
     if (new File(backupFile).exists()) {
       warn(s"File '${new File(backupFile).getCanonicalPath()}' already exists")
     } else {
-      val bufferedWriter = new BufferedWriter(new FileWriter(new File(backupFile)))
+      val outputFile: File = Option(new File(backupFile).getParent) match {
+        case Some(parent) ⇒ new File(backupFile)
+        case _            ⇒ new File(ApplicationOutputPath, backupFile)
+      }
+
+      val bufferedWriter = new BufferedWriter(new FileWriter(outputFile))
       try {
         bufferedWriter.write("<broker>\n")
         val result = withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
@@ -88,7 +94,7 @@ class BrokerCommands extends Commands {
               bufferedWriter.write(s"  </queue>\n")
             }
           })
-          s"Broker exported to ${new File(backupFile).getCanonicalPath()}"
+          s"Broker exported to ${outputFile.getCanonicalPath()}"
         })
         bufferedWriter.write("</broker>\n")
         result

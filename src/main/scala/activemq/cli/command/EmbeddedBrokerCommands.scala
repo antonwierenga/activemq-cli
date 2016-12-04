@@ -20,6 +20,7 @@ import activemq.cli.ActiveMQCLI
 import activemq.cli.ActiveMQCLI.ApplicationPath
 import activemq.cli.command.util.PrintStackTraceExecutionProcessor
 import activemq.cli.util.Console._
+import java.io.File
 import javax.annotation.PreDestroy
 import org.apache.activemq.broker.BrokerService
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator
@@ -56,7 +57,7 @@ class EmbeddedBrokerCommands extends Commands {
           if (ActiveMQCLI.Config.hasPath(s"embedded-broker.datadir")) {
             embeddedBroker.get.setDataDirectory(ActiveMQCLI.Config.getString("embedded-broker.datadir"))
           } else {
-            embeddedBroker.get.setDataDirectory(s"$ApplicationPath/data/activemq-data")
+            embeddedBroker.get.setDataDirectory(new File(ApplicationPath, "data/activemq-data").getPath)
           }
           embeddedBroker.get.addConnector(ActiveMQCLI.Config.getString("embedded-broker.connector"))
           embeddedBroker.get.getManagementContext.setConnectorPort(ActiveMQCLI.Config.getInt("embedded-broker.jmxport"));

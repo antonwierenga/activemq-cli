@@ -118,7 +118,7 @@ class QueueCommands extends Commands {
       if (rows.size > 0) {
         renderTable(rows, headers)
       } else {
-        warn(s"No queues found for broker '${ActiveMQCLI.broker.get.jmxurl}'")
+        warn(s"No queues found for broker '${ActiveMQCLI.broker.get.alias}'")
       }
     })
   }
