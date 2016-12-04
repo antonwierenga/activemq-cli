@@ -131,7 +131,7 @@ class BrokerCommands extends Commands {
 
       withSession((session: Session) ⇒ {})
       withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-        info(s"Broker is set to '${ActiveMQCLI.broker.get.jmxurl}'")
+        info(s"Connected to broker '${ActiveMQCLI.broker.get.alias}'")
       })
     } catch {
       case iae: IllegalArgumentException ⇒ {
@@ -140,7 +140,7 @@ class BrokerCommands extends Commands {
       }
       case e: Exception ⇒ {
         ActiveMQCLI.broker = None
-        warn(s"Failed to connect to Broker: ${e.getMessage}")
+        warn(s"Failed to connect to broker: ${e.getMessage}")
       }
     }
   }
