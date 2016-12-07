@@ -105,7 +105,7 @@ class MessageCommands extends Commands {
             s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}"
           )
         }
-        if (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive || times > 1) {
+        if (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive) {
           throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed")
         }
       }
@@ -134,16 +134,18 @@ class MessageCommands extends Commands {
           totalSent += 1
         }
       } else { // file
-        (XML.loadFile(file) \ "jms-message").map(xmlMessage ⇒ {
-          val headers = new java.util.HashMap[String, String]()
-          Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode).map(header ⇒ {
-            if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
+        for (i ← (1 to times)) yield {
+          (XML.loadFile(file) \ "jms-message").map(xmlMessage ⇒ {
+            val headers = new java.util.HashMap[String, String]()
+            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode).map(header ⇒ {
+              if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
+            })
+            if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode.toString)
+            (xmlMessage \ "properties" \ "property").map(property ⇒ headers.put((property \ "name").text, (property \ "value").text))
+            sentToQueueOrTopic(headers, (xmlMessage \ "body").text)
+            totalSent += 1
           })
-          if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode.toString)
-          (xmlMessage \ "properties" \ "property").map(property ⇒ headers.put((property \ "name").text, (property \ "value").text))
-          sentToQueueOrTopic(headers, (xmlMessage \ "body").text)
-          totalSent += 1
-        })
+        }
       }
       val duration = System.currentTimeMillis - start
       formatDuration(duration)
