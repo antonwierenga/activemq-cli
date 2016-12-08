@@ -38,10 +38,15 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("0.0.2" → List(
-    "Updated shell command 'export-messages': display export file's full path",
-    "Updated shell command 'export-broker': display export file's full path",
-    "Updated shell command 'connect-broker': check amqurl"
+  lazy val ReleaseNotes = Map("0.0.3" → List(
+    "Updated shell command 'send-message': --times option now supported when sending messages using the --file option"
+  ), "0.0.2" → List(
+    "Updated shell command 'export-messages': display full path of the export file",
+    "Updated shell command 'export-messages': default export path is 'activemq-cli/output' when no path is given",
+    "Updated shell command 'export-broker': display full path of the export file",
+    "Updated shell command 'export-broker': default export path is 'activemq-cli/output' when no path is given",
+    "Updated shell command 'connect-broker': validate amqurl (as specified in activemq-cli.config)",
+    "Fixed a bug that caused an error when activemq-cli was running from a path that contains spaces (Windows)"
   ), "0.0.1" → List(
     "New shell command 'add-queue'",
     "New shell command 'add-topic'",

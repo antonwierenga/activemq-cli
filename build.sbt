@@ -2,7 +2,7 @@ organization := "com.antonwierenga"
 
 name := "activemq-cli"
 
-version := "0.0.2"
+version := "0.0.3"
 
 scalaVersion := "2.11.6"
 
