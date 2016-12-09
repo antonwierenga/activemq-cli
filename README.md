@@ -209,7 +209,7 @@ Sends a message or file of messages to a queue or topic.
   - correlation-id (not applicable if -file is specified) 
   - delivery-mode (not applicable if -file is specified) 
   - time-to-live (not applicable if -file is specified) 
-  - times (number of times the message is send, not applicable if -file is specified) 
+  - times (number of times the message is send)
   - file
 
 Example file:
