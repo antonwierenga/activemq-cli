@@ -38,7 +38,15 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("0.0.3" → List(
+  lazy val ReleaseNotes = Map("0.0.4" → List(
+    "Updated shell command 'remove-all-topics': new options --filter, --no-consumers and --dry-run",
+    "Updated shell command 'remove-all-queues': new options --filter, --no-consumers and --dry-run",
+    "Updated shell command 'purge-all-queues': new options --filter, --no-consumers and --dry-run",
+    "Updated shell command 'list-topics': display total number of topics",
+    "Updated shell command 'list-queues': display total number of queues, new option --no-consumers",
+    "Renamed shell command 'queues' to 'list-queues'",
+    "Renamed shell command 'topics' to 'list-topics'"
+  ), "0.0.3" → List(
     "Updated shell command 'send-message': --times option now supported when sending messages using the --file option"
   ), "0.0.2" → List(
     "Updated shell command 'export-messages': display full path of the export file",

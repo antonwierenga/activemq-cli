@@ -47,7 +47,7 @@ class QueueCommandsTests {
 
   @Test
   def testQueuesEmpty = {
-    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("queues").getResult)
+    assertEquals(warn(s"No queues found"), shell.executeCommand("list-queues").getResult)
   }
 
   @Test
@@ -57,8 +57,9 @@ class QueueCommandsTests {
       """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
          |  ----------  -------  ---------  --------  --------
          |  testQueue   0        0          0         0
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
+         |
+         |Total queues: 1""".stripMargin,
+      shell.executeCommand("list-queues").getResult
     )
   }
 
@@ -66,7 +67,7 @@ class QueueCommandsTests {
   def testRemoveQueue = {
     assertEquals(info("Queue 'testQueue' added"), shell.executeCommand("add-queue --name testQueue").getResult)
     assertEquals(info("Queue 'testQueue' removed"), shell.executeCommand("remove-queue --name testQueue --force").getResult)
-    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("queues").getResult)
+    assertEquals(warn(s"No queues found"), shell.executeCommand("list-queues").getResult)
   }
 
   @Test
@@ -76,8 +77,9 @@ class QueueCommandsTests {
       """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
          |  ----------  -------  ---------  --------  --------
          |  testQueue   1        0          1         0
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
+         |
+         |Total queues: 1""".stripMargin,
+      shell.executeCommand("list-queues").getResult
     )
 
     assertEquals(info("Queue 'testQueue' purged"), shell.executeCommand("purge-queue --name testQueue --force").getResult)
@@ -85,8 +87,9 @@ class QueueCommandsTests {
       """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
          |  ----------  -------  ---------  --------  --------
          |  testQueue   0        0          1         1
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
+         |
+         |Total queues: 1""".stripMargin,
+      shell.executeCommand("list-queues").getResult
     )
   }
 
@@ -99,8 +102,94 @@ class QueueCommandsTests {
   def testRemoveAllQueues = {
     assertEquals(info("Queue 'testQueue1' added"), shell.executeCommand("add-queue --name testQueue1").getResult)
     assertEquals(info("Queue 'testQueue2' added"), shell.executeCommand("add-queue --name testQueue2").getResult)
-    assertEquals(info("Queues removed: 2"), shell.executeCommand("remove-all-queues --force").getResult)
-    assertEquals(warn(s"No queues found for broker '${ActiveMQCLI.broker.get.alias}'"), shell.executeCommand("queues").getResult)
+    assertEquals(
+      """|Queue to be removed: 'testQueue1'
+         |Queue to be removed: 'testQueue2'
+         |Total queues to be removed: 2""".stripMargin,
+      shell.executeCommand("remove-all-queues --dry-run").getResult
+    )
+
+    assertEquals(
+      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+         |  ----------  -------  ---------  --------  --------
+         |  testQueue2  0        0          0         0
+         |  testQueue1  0        0          0         0
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
+    )
+    assertEquals(
+      """|Queue removed: 'testQueue1'
+         |Queue removed: 'testQueue2'
+         |Total queues removed: 2""".stripMargin,
+      shell.executeCommand("remove-all-queues --force").getResult
+    )
+    assertEquals(warn(s"No queues found"), shell.executeCommand("list-queues").getResult)
+  }
+
+  @Test
+  def testPurgeAllQueuesDryRun = {
+    assertEquals(info("Messages sent to queue 'testQueue1': 1"), shell.executeCommand("send-message --queue testQueue1 --body testMessage1").getResult)
+    assertEquals(info("Messages sent to queue 'testQueue2': 1"), shell.executeCommand("send-message --queue testQueue2 --body testMessage2").getResult)
+
+    assertEquals(
+      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+         |  ----------  -------  ---------  --------  --------
+         |  testQueue2  1        0          1         0
+         |  testQueue1  1        0          1         0
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
+    )
+
+    assertEquals(
+      """|Queue to be purged: 'testQueue1'
+         |Queue to be purged: 'testQueue2'
+         |Total queues to be purged: 2""".stripMargin,
+      shell.executeCommand("purge-all-queues --force --dry-run").getResult
+    )
+
+    assertEquals(
+      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+         |  ----------  -------  ---------  --------  --------
+         |  testQueue2  1        0          1         0
+         |  testQueue1  1        0          1         0
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
+    )
+  }
+
+  @Test
+  def testPurgeAllQueuesFilter = {
+    assertEquals(info("Messages sent to queue 'testQueue1': 1"), shell.executeCommand("send-message --queue testQueue1 --body testMessage1").getResult)
+    assertEquals(info("Messages sent to queue 'testQueue2': 1"), shell.executeCommand("send-message --queue testQueue2 --body testMessage2").getResult)
+
+    assertEquals(
+      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+         |  ----------  -------  ---------  --------  --------
+         |  testQueue2  1        0          1         0
+         |  testQueue1  1        0          1         0
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
+    )
+
+    assertEquals(
+      """|Queue purged: 'testQueue2'
+         |Total queues purged: 1""".stripMargin,
+      shell.executeCommand("purge-all-queues --force --filter 2").getResult
+    )
+
+    assertEquals(
+      """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+         |  ----------  -------  ---------  --------  --------
+         |  testQueue2  0        0          1         1
+         |  testQueue1  1        0          1         0
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
+    )
   }
 
   @Test
@@ -113,18 +202,26 @@ class QueueCommandsTests {
          |  ----------  -------  ---------  --------  --------
          |  testQueue2  1        0          1         0
          |  testQueue1  1        0          1         0
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
     )
 
-    assertEquals(info("Queues purged: 2"), shell.executeCommand("purge-all-queues --force").getResult)
+    assertEquals(
+      """|Queue purged: 'testQueue1'
+         |Queue purged: 'testQueue2'
+         |Total queues purged: 2""".stripMargin,
+      shell.executeCommand("purge-all-queues --force").getResult
+    )
+
     assertEquals(
       """|  Queue Name  Pending  Consumers  Enqueued  Dequeued
          |  ----------  -------  ---------  --------  --------
          |  testQueue2  0        0          1         1
          |  testQueue1  0        0          1         1
-         |""".stripMargin,
-      shell.executeCommand("queues").getResult
+         |
+         |Total queues: 2""".stripMargin,
+      shell.executeCommand("list-queues").getResult
     )
   }
 
@@ -143,7 +240,7 @@ class QueueCommandsTests {
   def testAvailabilityIndicators: Unit = {
     assertTrue(shell.executeCommand("disconnect").isSuccess)
     try {
-      List("queues", "add-queue", "purge-queue", "purge-all-queues", "remove-queue", "remove-all-queues").map(command ⇒ {
+      List("list-queues", "add-queue", "purge-queue", "purge-all-queues", "remove-queue", "remove-all-queues").map(command ⇒ {
         assertCommandFailed(shell.executeCommand(command))
       })
     } finally {

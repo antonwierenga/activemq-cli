@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component
 @Component
 class TopicCommands extends Commands {
 
-  @CliAvailabilityIndicator(Array("add-topic", "remove-topic", "topics", "remove-all-topics"))
+  @CliAvailabilityIndicator(Array("add-topic", "remove-topic", "list-topics", "remove-all-topics"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
 
   @CliCommand(value = Array("add-topic"), help = "Adds a topic")
@@ -67,8 +67,8 @@ class TopicCommands extends Commands {
     })
   }
 
-  @CliCommand(value = Array("topics"), help = "Displays topics")
-  def topics(@CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String): String = {
+  @CliCommand(value = Array("list-topics"), help = "Displays topics")
+  def listTopics(@CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String): String = {
     val headers = List("Topic Name", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       val rows = brokerViewMBean.getTopics.filter(objectName ⇒
@@ -86,9 +86,9 @@ class TopicCommands extends Commands {
         })
 
       if (rows.size > 0) {
-        renderTable(rows, headers)
+        renderTable(rows, headers) + s"\nTotal topics: ${rows.size}"
       } else {
-        warn(s"No topics found for broker '${ActiveMQCLI.broker.get.alias}'")
+        warn(s"No topics found")
       }
     })
   }
