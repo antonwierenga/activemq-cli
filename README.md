@@ -126,6 +126,24 @@ Example 2:`list-messages --queue foo --selector "JMSCorrelationID = '12345'"`
 
 *For this command activemq-cli creates a temporary mirror queue to ensure all messages are listed.*
 
+### list-queues
+Lists queues.
+
+##### Parameters:
+  - filter (list queues with the specified filter in the name)
+  - no-consumers (list queues with no consumers)
+Example 1:`queues --filter foo`
+
+Example 2:`queues --no-consumers`
+
+### list-topics
+Lists topics.
+
+##### Parameters:
+  - filter (list topics with the specified filter in the name)
+
+Example:`topics --filter foo`
+
 ### move-messages
 Moves messages from a queue to another queue.
 
@@ -139,8 +157,13 @@ Purges all queues.
 
 ##### Parameters:
   - force (no prompt for confirmation)
+  - dry-run (use this to test what is going to be purged, no queues are actually purged)
+  - filter (queues with the specified filter in the name)
+  - no-consumers (queues with no consumers)
+  
+Example 1:`purge-all-queues`
 
-Example:`purge-all-queues`
+Example 2:`purge-all-queues --filter dlq --no-consumers --dry-run`
 
 ### purge-queue
 Purges a queues.
@@ -156,29 +179,30 @@ Displays the release notes.
 
 Example:`release-notes`
 
-### queues
-Lists queues.
-
-##### Parameters:
-  - filter (list queues with the specified filter in the name)
-
-Example:`queues --filter foo`
-
 ### remove-all-queues
 Removes all queues.
 
 ##### Parameters:
   - force (no prompt for confirmation)
+  - dry-run (use this to test what is going to be removed, no queues are actually removed)
+  - filter (queues with the specified filter in the name)
+  - no-consumers (queues with no consumers)
 
-Example:`remove-all-queues`
+Example 1:`remove-all-queues`
+
+Example 2:`remove-all-queues --filter dlq --no-consumers --dry-run`
 
 ### remove-all-topics
 Removes all topics.
 
 ##### Parameters:
   - force (no prompt for confirmation)
+  - dry-run (use this to test what is going to be removed, no queues are actually removed)
+  - filter (queues with the specified filter in the name)
 
-Example:`remove-all-topics`
+Example 1:`remove-all-topics`
+
+Example 2:`remove-all-topics --filter advisory --dry-run`
 
 ### remove-queue
 Removes a queue.
@@ -269,12 +293,3 @@ Example:`start-embedded-broker`
 Stops the embedded broker.
 
 Example:`stop-embedded-broker`
-
-### topics
-Lists topics.
-
-##### Parameters:
-  - filter (list topics with the specified filter in the name)
-
-Example:`topics --filter foo`
-
