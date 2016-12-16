@@ -163,7 +163,7 @@ Purges all queues.
   
 Example 1:`purge-all-queues`
 
-Example 2:`purge-all-queues --filter dlq --no-consumers --dry-run`
+Example 2:`purge-all-queues --filter foo --no-consumers --dry-run`
 
 ### purge-queue
 Purges a queues.
@@ -190,7 +190,7 @@ Removes all queues.
 
 Example 1:`remove-all-queues`
 
-Example 2:`remove-all-queues --filter dlq --no-consumers --dry-run`
+Example 2:`remove-all-queues --filter foo --no-consumers --dry-run`
 
 ### remove-all-topics
 Removes all topics.
@@ -202,7 +202,7 @@ Removes all topics.
 
 Example 1:`remove-all-topics`
 
-Example 2:`remove-all-topics --filter advisory --dry-run`
+Example 2:`remove-all-topics --filter foo --dry-run`
 
 ### remove-queue
 Removes a queue.
