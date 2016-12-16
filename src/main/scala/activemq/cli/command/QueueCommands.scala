@@ -75,7 +75,7 @@ class QueueCommands extends Commands {
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") noConsumers: String
+    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
   ): String = {
     withFilteredQueues("removed", force, filter, dryRun, noConsumers: Boolean,
       (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
@@ -88,7 +88,7 @@ class QueueCommands extends Commands {
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") noConsumers: String
+    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
   ): String = {
     withFilteredQueues("purged", force, filter, dryRun, noConsumers: Boolean,
       (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
@@ -99,7 +99,7 @@ class QueueCommands extends Commands {
   @CliCommand(value = Array("list-queues"), help = "Displays queues")
   def listQueues( //scalastyle:ignore
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") noConsumers: String
+    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
   ): String = {
     val headers = List("Queue Name", "Pending", "Consumers", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {

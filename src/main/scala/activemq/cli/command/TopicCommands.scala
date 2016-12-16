@@ -57,14 +57,15 @@ class TopicCommands extends Commands {
   }
 
   @CliCommand(value = Array("remove-all-topics"), help = "Removes all topics")
-  def removeAllTopics(@CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String): String = {
-    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
-      confirm(force)
-      val topics = brokerViewMBean.getTopics
-      topics.par.map(objectName ⇒
-        brokerViewMBean.removeTopic(MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true).getName))
-      info(s"Topics removed: ${topics.size}")
-    })
+  def removeAllQueues(
+    @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
+    @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
+    @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String
+  ): String = {
+    withFilteredTopics("removed", force, filter, dryRun,
+      (topicViewMBean: TopicViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
+        brokerViewMBean.removeTopic(topicViewMBean.getName)
+      })
   }
 
   @CliCommand(value = Array("list-topics"), help = "Displays topics")
@@ -87,6 +88,35 @@ class TopicCommands extends Commands {
 
       if (rows.size > 0) {
         renderTable(rows, headers) + s"\nTotal topics: ${rows.size}"
+      } else {
+        warn(s"No topics found")
+      }
+    })
+  }
+
+  def withFilteredTopics(action: String, force: String, filter: String, dryRun: Boolean,
+    callback: (TopicViewMBean, BrokerViewMBean, Boolean) ⇒ Unit): String = {
+    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+      if (!dryRun) confirm(force)
+      val rows = brokerViewMBean.getTopics.filter(objectName ⇒
+        if (filter) {
+          getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
+        } else {
+          true
+        }).par.map({ objectName ⇒
+        (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true))
+      }).par.map(topicViewMBean ⇒ {
+        val topicName = topicViewMBean.getName
+        if (dryRun) {
+          s"Topic to be ${action}: '${topicName}'"
+        } else {
+          callback(topicViewMBean, brokerViewMBean, dryRun)
+          s"Topic ${action}: '${topicName}'"
+        }
+      })
+      if (rows.size > 0) {
+        val dryRunText = if (dryRun) "to be " else ""
+        (rows.seq.sorted :+ s"Total topics ${dryRunText}${action}: ${rows.size}").mkString("\n")
       } else {
         warn(s"No topics found")
       }

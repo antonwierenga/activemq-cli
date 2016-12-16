@@ -74,8 +74,55 @@ class TopicCommandsTests {
   def testRemoveAllTopics = {
     assertEquals(info("Topic 'testTopic1' added"), shell.executeCommand("add-topic --name testTopic1").getResult)
     assertEquals(info("Topic 'testTopic2' added"), shell.executeCommand("add-topic --name testTopic2").getResult)
-    assertEquals(info("Topics removed: 3"), shell.executeCommand("remove-all-topics --force").getResult)
+    assertEquals(
+      """|Topic removed: 'ActiveMQ.Advisory.Topic'
+         |Topic removed: 'testTopic1'
+         |Topic removed: 'testTopic2'
+         |Total topics removed: 3""".stripMargin,
+      shell.executeCommand("remove-all-topics --force").getResult
+    )
+
     assertEquals(warn(s"No topics found"), shell.executeCommand("list-topics --filter testTopic").getResult)
+  }
+
+  @Test
+  def testRemoveAllTopicsDryRun = {
+    assertEquals(info("Topic 'testTopic' added"), shell.executeCommand("add-topic --name testTopic").getResult)
+    assertEquals(
+      """|Topic to be removed: 'ActiveMQ.Advisory.Topic'
+         |Topic to be removed: 'testTopic'
+         |Total topics to be removed: 2""".stripMargin,
+      shell.executeCommand("remove-all-topics --dry-run").getResult
+    )
+
+    assertEquals(
+      """|  Topic Name  Enqueued  Dequeued
+         |  ----------  --------  --------
+         |  testTopic   0         0
+         |
+         |Total topics: 1""".stripMargin,
+      shell.executeCommand("list-topics --filter testTopic").getResult
+    )
+  }
+
+  @Test
+  def testRemoveAllTopicsFilter = {
+    assertEquals(info("Topic 'testTopic1' added"), shell.executeCommand("add-topic --name testTopic1").getResult)
+    assertEquals(info("Topic 'testTopic2' added"), shell.executeCommand("add-topic --name testTopic2").getResult)
+    assertEquals(
+      """|Topic removed: 'testTopic2'
+         |Total topics removed: 1""".stripMargin,
+      shell.executeCommand("remove-all-topics --force --filter 2").getResult
+    )
+
+    assertEquals(
+      """|  Topic Name  Enqueued  Dequeued
+         |  ----------  --------  --------
+         |  testTopic1  0         0
+         |
+         |Total topics: 1""".stripMargin,
+      shell.executeCommand("list-topics --filter testTopic").getResult
+    )
   }
 
   @Test
