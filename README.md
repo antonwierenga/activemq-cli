@@ -124,6 +124,8 @@ Example 1:`list-messages --queue foo`
 
 Example 2:`list-messages --queue foo --selector "JMSCorrelationID = '12345'"`
 
+Example 3:`list-messages --queue foo --regex bar`
+
 *For this command activemq-cli creates a temporary mirror queue to ensure all messages are listed.*
 
 ### list-queues
@@ -132,6 +134,7 @@ Lists queues.
 ##### Parameters:
   - filter (list queues with the specified filter in the name)
   - no-consumers (list queues with no consumers)
+  
 Example 1:`queues --filter foo`
 
 Example 2:`queues --no-consumers`
