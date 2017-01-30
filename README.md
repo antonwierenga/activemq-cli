@@ -26,6 +26,7 @@ broker {
     username = "admin"
     password = "admin"		
   }	
+  
   prod {
     amqurl = "tcp://production-server:61616"
     jmxurl = "service:jmx:rmi:///jndi/rmi://production-server:1099/jmxrmi"
