@@ -30,6 +30,11 @@ broker {
   prod {
     amqurl = "tcp://production-server:61616"
     jmxurl = "service:jmx:rmi:///jndi/rmi://production-server:1099/jmxrmi"
+    
+    // SSL 
+    keyStore = "~/client.ks"
+    keyStorePassword = "secret"
+    trustStore = "~/client.ts"
   }		
 }
 ```
