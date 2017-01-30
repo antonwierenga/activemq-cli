@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Wierenga
+ * Copyright 2017 Anton Wierenga
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,7 @@ class BrokerCommands extends Commands {
       ActiveMQCLI.broker = Option(new Broker(pBroker, ActiveMQCLI.Config.getString(s"broker.$pBroker.amqurl"),
         ActiveMQCLI.Config.getString(s"broker.$pBroker.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$pBroker.jmxname"), username, password))
 
+      setSslProperties(pBroker)
       withSession((session: Session) ⇒ {})
       withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
         info(s"Connected to broker '${ActiveMQCLI.broker.get.alias}'")
@@ -148,6 +149,18 @@ class BrokerCommands extends Commands {
         ActiveMQCLI.broker = None
         warn(s"Failed to connect to broker: ${e.getMessage}")
       }
+    }
+  }
+
+  def setSslProperties(pBroker: String): Unit = {
+    if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.keyStore")) {
+      System.setProperty("javax.net.ssl.keyStore", ActiveMQCLI.Config.getString(s"broker.$pBroker.keyStore"))
+    }
+    if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.keyStorePassword")) {
+      System.setProperty("javax.net.ssl.keyStorePassword", ActiveMQCLI.Config.getString(s"broker.$pBroker.keyStorePassword"))
+    }
+    if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.trustStore")) {
+      System.setProperty("javax.net.ssl.trustStore", ActiveMQCLI.Config.getString(s"broker.$pBroker.trustStore"))
     }
   }
 }

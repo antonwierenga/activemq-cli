@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Wierenga
+ * Copyright 2017 Anton Wierenga
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.1.0" → List(
+  lazy val ReleaseNotes = Map("v0.2.0" → List(
+    "Updated shell command 'connect-broker': SSL support (specify keyStore, keyStorePassword and trustStore in broker config)"
+  ), "v0.1.0" → List(
     "Updated shell command 'remove-all-topics': new options --filter and --dry-run",
     "Updated shell command 'remove-all-queues': new options --filter, --no-consumers and --dry-run",
     "Updated shell command 'purge-all-queues': new options --filter, --no-consumers and --dry-run",
