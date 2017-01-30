@@ -28,7 +28,7 @@ broker {
   }	
   
   prod {
-    amqurl = "tcp://production-server:61616"
+    amqurl = "ssl://production-server:61616"
     jmxurl = "service:jmx:rmi:///jndi/rmi://production-server:1099/jmxrmi"
     
     // SSL 
