@@ -201,4 +201,30 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   def getNewMirrorQueue(queue: String): String = {
     s"activemq-cli.$queue.mirror.${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.${UUID.randomUUID().toString()}"
   }
+
+  def applyFilterParameter(parameter: String, value: Long, parameterValue: Long): Boolean = {
+    if (parameter) {
+      parameter.substring(0, 1) match {
+        case "<" ⇒ value < parameterValue
+        case ">" ⇒ value > parameterValue
+        case "=" ⇒ value == parameterValue
+      }
+    } else {
+      true
+    }
+  }
+
+  def parseFilterParameter(parameter: String, parameterName: String): Long = {
+    if (parameter) {
+      val errorMessage = s"The --${parameterName} filter must start with <, > or = followed by a number (example: --${parameterName} <10)"
+      if (!parameter.startsWith("<") && !parameter.startsWith(">") && !parameter.startsWith("=")) throw new IllegalArgumentException(errorMessage)
+      try {
+        parameter.substring(1).trim.toLong
+      } catch {
+        case e: Exception ⇒ throw new IllegalArgumentException(errorMessage)
+      }
+    } else {
+      0
+    }
+  }
 }

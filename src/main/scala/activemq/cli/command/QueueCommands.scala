@@ -75,10 +75,14 @@ class QueueCommands extends Commands {
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
+    @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
+    @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
+    @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
+    @CliOption(key = Array("consumers"), mandatory = false, help = "Only queues that meet the consumers filter are listed") consumers: String
   ): String = {
-    withFilteredQueues("removed", force, filter, dryRun, noConsumers: Boolean,
-      (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
+    withFilteredQueues("removed", force, filter, dryRun, pending, enqueued, dequeued, consumers,
+      (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean, pending: String, enqueued: String, dequeued: String,
+        consumers: String) ⇒ {
         brokerViewMBean.removeQueue(queueViewMBean.getName)
       })
   }
@@ -88,21 +92,35 @@ class QueueCommands extends Commands {
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
+    @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
+    @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
+    @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
+    @CliOption(key = Array("consumers"), mandatory = false, help = "Only queues that meet the consumers filter are listed") consumers: String
   ): String = {
-    withFilteredQueues("purged", force, filter, dryRun, noConsumers: Boolean,
-      (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
+    withFilteredQueues("purged", force, filter, dryRun, pending, enqueued, dequeued, consumers,
+      (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean, pending: String, enqueued: String, dequeued: String,
+        consumers: String) ⇒ {
         queueViewMBean.purge()
       })
   }
 
   @CliCommand(value = Array("list-queues"), help = "Displays queues")
   def listQueues( //scalastyle:ignore
-    @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
-    @CliOption(key = Array("no-consumers"), specifiedDefaultValue = "yes", mandatory = false, help = "Only queues with no consumers") noConsumers: String
+    @CliOption(key = Array("filter"), mandatory = false, help = "Only queues with a name that contains the value specified by filter are listed") filter: String, //scalastyle:ignore
+    @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
+    @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
+    @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
+    @CliOption(key = Array("consumers"), mandatory = false, help = "Only queues that meet the consumers filter are listed") consumers: String
   ): String = {
+
     val headers = List("Queue Name", "Pending", "Consumers", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+
+      val pendingCount = parseFilterParameter(pending, "pending")
+      val enqueuedCount = parseFilterParameter(enqueued, "enqueued")
+      val dequeuedCount = parseFilterParameter(dequeued, "dequeued")
+      val consumersCount = parseFilterParameter(consumers, "consumers")
+
       val queueViewMBeans = brokerViewMBean.getQueues.filter(objectName ⇒
         if (filter) {
           getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
@@ -110,7 +128,10 @@ class QueueCommands extends Commands {
           true
         }).par.map({ objectName ⇒
         (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[QueueViewMBean], true))
-      }).filter(queueViewMBean ⇒ if (noConsumers) queueViewMBean.getConsumerCount == 0 else true)
+      }).filter(queueViewMBean ⇒ applyFilterParameter(pending, queueViewMBean.getQueueSize, pendingCount) &&
+        applyFilterParameter(enqueued, queueViewMBean.getEnqueueCount, enqueuedCount) &&
+        applyFilterParameter(dequeued, queueViewMBean.getDequeueCount, dequeuedCount) &&
+        applyFilterParameter(consumers, queueViewMBean.getConsumerCount, consumersCount))
 
       val rows = queueViewMBeans.par.map(queueViewMBean ⇒ List(queueViewMBean.getName, queueViewMBean.getQueueSize, queueViewMBean.getConsumerCount,
         queueViewMBean.getEnqueueCount, queueViewMBean.getDequeueCount))
@@ -133,9 +154,15 @@ class QueueCommands extends Commands {
     })
   }
 
-  def withFilteredQueues(action: String, force: String, filter: String, dryRun: Boolean, noConsumers: Boolean,
-    callback: (QueueViewMBean, BrokerViewMBean, Boolean) ⇒ Unit): String = {
+  def withFilteredQueues(action: String, force: String, filter: String, dryRun: Boolean, pending: String, enqueued: String, dequeued: String, //scalastyle:ignore
+    consumers: String, callback: (QueueViewMBean, BrokerViewMBean, Boolean, String, String, String, String) ⇒ Unit): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+
+      val pendingCount = parseFilterParameter(pending, "pending")
+      val enqueuedCount = parseFilterParameter(enqueued, "enqueued")
+      val dequeuedCount = parseFilterParameter(dequeued, "dequeued")
+      val consumersCount = parseFilterParameter(consumers, "consumers")
+
       if (!dryRun) confirm(force)
       val rows = brokerViewMBean.getQueues.filter(objectName ⇒
         if (filter) {
@@ -144,12 +171,15 @@ class QueueCommands extends Commands {
           true
         }).par.map({ objectName ⇒
         (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[QueueViewMBean], true))
-      }).filter(queueViewMBean ⇒ if (noConsumers) queueViewMBean.getConsumerCount == 0 else true).par.map(queueViewMBean ⇒ {
+      }).filter(queueViewMBean ⇒ applyFilterParameter(pending, queueViewMBean.getQueueSize, pendingCount) &&
+        applyFilterParameter(enqueued, queueViewMBean.getEnqueueCount, enqueuedCount) &&
+        applyFilterParameter(dequeued, queueViewMBean.getDequeueCount, dequeuedCount) &&
+        applyFilterParameter(consumers, queueViewMBean.getConsumerCount, consumersCount)).par.map(queueViewMBean ⇒ {
         val queueName = queueViewMBean.getName
         if (dryRun) {
           s"Queue to be ${action}: '${queueName}'"
         } else {
-          callback(queueViewMBean, brokerViewMBean, dryRun)
+          callback(queueViewMBean, brokerViewMBean, dryRun, pending, enqueued, dequeued, consumers)
           s"Queue ${action}: '${queueName}'"
         }
       })

@@ -38,7 +38,13 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.2.0" → List(
+  lazy val ReleaseNotes = Map("v0.3.0" → List(
+    "Updated shell command 'list-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
+    "Updated shell command 'purge-all-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
+    "Updated shell command 'remove-all-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
+    "Updated shell command 'list-topics': new filter options --enqueued and --dequeued",
+    "Updated shell command 'remove-all-topics': new filter options --enqueued and --dequeued"
+  ), "v0.2.0" → List(
     "Updated shell command 'connect-broker': SSL support (specify keyStore, keyStorePassword and trustStore in broker config)"
   ), "v0.1.0" → List(
     "Updated shell command 'remove-all-topics': new options --filter and --dry-run",

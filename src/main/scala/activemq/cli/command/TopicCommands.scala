@@ -60,18 +60,28 @@ class TopicCommands extends Commands {
   def removeAllQueues(
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
-    @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String
+    @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
+    @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
+    @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String
   ): String = {
-    withFilteredTopics("removed", force, filter, dryRun,
-      (topicViewMBean: TopicViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean) ⇒ {
-        brokerViewMBean.removeTopic(topicViewMBean.getName)
-      })
+    withFilteredTopics("removed", force, filter, dryRun, enqueued, dequeued, (topicViewMBean: TopicViewMBean, brokerViewMBean: BrokerViewMBean,
+      dryRun: Boolean, enqueued: String, dequeued: String) ⇒ {
+      brokerViewMBean.removeTopic(topicViewMBean.getName)
+    })
   }
 
   @CliCommand(value = Array("list-topics"), help = "Displays topics")
-  def listTopics(@CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String): String = {
+  def listTopics(
+    @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
+    @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
+    @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String
+  ): String = {
     val headers = List("Topic Name", "Enqueued", "Dequeued")
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+
+      val enqueuedCount = parseFilterParameter(enqueued, "enqueued")
+      val dequeuedCount = parseFilterParameter(dequeued, "dequeued")
+
       val rows = brokerViewMBean.getTopics.filter(objectName ⇒
         if (filter) {
           getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
@@ -79,7 +89,9 @@ class TopicCommands extends Commands {
           true
         }).par.map({ objectName ⇒
         (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true))
-      }).par.map(topicViewMBean ⇒ List(topicViewMBean.getName, topicViewMBean.getEnqueueCount, topicViewMBean.getDequeueCount))
+      }).filter(queueViewMBean ⇒ applyFilterParameter(enqueued, queueViewMBean.getEnqueueCount, enqueuedCount) &&
+        applyFilterParameter(dequeued, queueViewMBean.getDequeueCount, dequeuedCount))
+        .par.map(topicViewMBean ⇒ List(topicViewMBean.getName, topicViewMBean.getEnqueueCount, topicViewMBean.getDequeueCount))
         .seq.sortBy(ActiveMQCLI.Config.getOptionalString(s"command.topics.order.field") match {
           case Some("Enqueued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Enqueued"))).asInstanceOf[String] }
           case Some("Dequeued") ⇒ (row: Seq[Any]) ⇒ { "%015d".format(row(headers.indexOf("Dequeued"))).asInstanceOf[String] }
@@ -94,9 +106,13 @@ class TopicCommands extends Commands {
     })
   }
 
-  def withFilteredTopics(action: String, force: String, filter: String, dryRun: Boolean,
-    callback: (TopicViewMBean, BrokerViewMBean, Boolean) ⇒ Unit): String = {
+  def withFilteredTopics(action: String, force: String, filter: String, dryRun: Boolean, enqueued: String, dequeued: String,
+    callback: (TopicViewMBean, BrokerViewMBean, Boolean, String, String) ⇒ Unit): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+
+      val enqueuedCount = parseFilterParameter(enqueued, "enqueued")
+      val dequeuedCount = parseFilterParameter(dequeued, "dequeued")
+
       if (!dryRun) confirm(force)
       val rows = brokerViewMBean.getTopics.filter(objectName ⇒
         if (filter) {
@@ -105,12 +121,13 @@ class TopicCommands extends Commands {
           true
         }).par.map({ objectName ⇒
         (MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, objectName, classOf[TopicViewMBean], true))
-      }).par.map(topicViewMBean ⇒ {
+      }).filter(queueViewMBean ⇒ applyFilterParameter(enqueued, queueViewMBean.getEnqueueCount, enqueuedCount) &&
+        applyFilterParameter(dequeued, queueViewMBean.getDequeueCount, dequeuedCount)).par.map(topicViewMBean ⇒ {
         val topicName = topicViewMBean.getName
         if (dryRun) {
           s"Topic to be ${action}: '${topicName}'"
         } else {
-          callback(topicViewMBean, brokerViewMBean, dryRun)
+          callback(topicViewMBean, brokerViewMBean, dryRun, enqueued, dequeued)
           s"Topic ${action}: '${topicName}'"
         }
       })

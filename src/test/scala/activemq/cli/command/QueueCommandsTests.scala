@@ -209,6 +209,12 @@ class QueueCommandsTests {
 
     assertEquals(
       """|Queue purged: 'testQueue1'
+         |Total queues purged: 1""".stripMargin,
+      shell.executeCommand("purge-all-queues --force --filter testQueue1").getResult
+    )
+
+    assertEquals(
+      """|Queue purged: 'testQueue1'
          |Queue purged: 'testQueue2'
          |Total queues purged: 2""".stripMargin,
       shell.executeCommand("purge-all-queues --force").getResult
@@ -223,6 +229,54 @@ class QueueCommandsTests {
          |Total queues: 2""".stripMargin,
       shell.executeCommand("list-queues").getResult
     )
+  }
+
+  @Test
+  def testListQueuesFilters = {
+    assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --body testMessage1").getResult)
+
+    List(
+      "list-queues --pending =1",
+      "list-queues --pending >0",
+      "list-queues --pending <2",
+      "list-queues --enqueued =1",
+      "list-queues --enqueued >0",
+      "list-queues --enqueued <2",
+      "list-queues --dequeued =0",
+      "list-queues --dequeued >-1",
+      "list-queues --dequeued <1",
+      "list-queues --consumers =0",
+      "list-queues --consumers >-1",
+      "list-queues --consumers <1",
+      "list-queues --pending >0 --consumers <1",
+      "list-queues --enqueued >0 --dequeued <1"
+
+    ).map { command ⇒
+        assertEquals("""|  Queue Name  Pending  Consumers  Enqueued  Dequeued
+                        |  ----------  -------  ---------  --------  --------
+                        |  testQueue   1        0          1         0
+                        |
+                        |Total queues: 1""".stripMargin, shell.executeCommand(command).getResult)
+      }
+
+    assertFalse(List(
+      "list-queues --pending =0",
+      "list-queues --pending >1",
+      "list-queues --pending <1",
+      "list-queues --enqueued =0",
+      "list-queues --enqueued >1",
+      "list-queues --enqueued <1",
+      "list-queues --dequeued =1",
+      "list-queues --dequeued >0",
+      "list-queues --dequeued <0",
+      "list-queues --consumers =1",
+      "list-queues --consumers >0",
+      "list-queues --consumers <0",
+      "list-queues --pending >0 --consumers >0",
+      "list-queues --enqueued >0 --dequeued >0"
+    ).map { command ⇒
+        assertEquals(warn("No queues found"), shell.executeCommand(command).getResult)
+      }.isEmpty)
   }
 
   @Test
