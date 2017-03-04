@@ -30,12 +30,22 @@ broker {
   prod {
     amqurl = "tcp://production-server:61616"
     jmxurl = "service:jmx:rmi:///jndi/rmi://production-server:1099/jmxrmi"
+  }	
+  
+  fuse-server {
+    amqurl = "tcp://fuse-server:61616"
+    jmxurl = "service:jmx:rmi:///jndi/rmi://fuse-server:1099/karaf-root"  
+  }
+  
+  ssl-server {
+    amqurl = "ssl://ssl-server:61616"
+    jmxurl = "service:jmx:rmi:///jndi/rmi://ssl-server:1099/jmxrmi"
     
     // SSL 
     keyStore = "~/client.ks"
     keyStorePassword = "secret"
     trustStore = "~/client.ts"
-  }		
+  }  
 }
 ```
 
