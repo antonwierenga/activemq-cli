@@ -149,19 +149,26 @@ Lists queues.
 
 ##### Parameters:
   - filter (list queues with the specified filter in the name)
-  - no-consumers (list queues with no consumers)
+  - pending (list queues for which the number of pending messages meets the pending filter)
+  - enqueued (list queues for which the number of enqueued messages meets the enqueued filter)
+  - dequeued (list queues for which the number of dequeued messages meets the dequeued filter)
+  - consumers (list queues for which the number of consumers meets the consumers filter)
   
 Example 1:`queues --filter foo`
 
-Example 2:`queues --no-consumers`
+Example 2:`queues --pending >0 --consumers =0`
 
 ### list-topics
 Lists topics.
 
 ##### Parameters:
   - filter (list topics with the specified filter in the name)
+  - enqueued (remove topics for which the number of enqueued messages meets the enqueued filter)
+  - dequeued (remove topics for which the number of dequeued messages meets the dequeued filter)   
 
-Example:`topics --filter foo`
+Example 1:`topics --filter foo`
+
+Example 2:`topics --enqueued >0`
 
 ### move-messages
 Moves messages from a queue to another queue.
@@ -178,11 +185,14 @@ Purges all queues.
   - force (no prompt for confirmation)
   - dry-run (use this to test what is going to be purged, no queues are actually purged)
   - filter (queues with the specified filter in the name)
-  - no-consumers (queues with no consumers)
+  - pending (purge queues for which the number of pending messages meets the pending filter)
+  - enqueued (purge queues for which the number of enqueued messages meets the enqueued filter)
+  - dequeued (purge queues for which the number of dequeued messages meets the dequeued filter)
+  - consumers (purge queues for which the number of consumers meets the consumers filter)
   
 Example 1:`purge-all-queues`
 
-Example 2:`purge-all-queues --filter foo --no-consumers --dry-run`
+Example 2:`purge-all-queues --filter foo --consumers =0 --dry-run`
 
 ### purge-queue
 Purges a queues.
@@ -205,11 +215,14 @@ Removes all queues.
   - force (no prompt for confirmation)
   - dry-run (use this to test what is going to be removed, no queues are actually removed)
   - filter (queues with the specified filter in the name)
-  - no-consumers (queues with no consumers)
-
+  - pending (remove queues for which the number of pending messages meets the pending filter)
+  - enqueued (remove queues for which the number of enqueued messages meets the enqueued filter)
+  - dequeued (remove queues for which the number of dequeued messages meets the dequeued filter)
+  - consumers (remove queues for which the number of consumers meets the consumers filter)
+  
 Example 1:`remove-all-queues`
 
-Example 2:`remove-all-queues --filter foo --no-consumers --dry-run`
+Example 2:`remove-all-queues --filter foo --consumers =0 --dry-run`
 
 ### remove-all-topics
 Removes all topics.
@@ -218,10 +231,12 @@ Removes all topics.
   - force (no prompt for confirmation)
   - dry-run (use this to test what is going to be removed, no queues are actually removed)
   - filter (queues with the specified filter in the name)
+  - enqueued (remove topics for which the number of enqueued messages meets the enqueued filter)
+  - dequeued (remove topics for which the number of dequeued messages meets the dequeued filter)  
 
 Example 1:`remove-all-topics`
 
-Example 2:`remove-all-topics --filter foo --dry-run`
+Example 2:`remove-all-topics --filter foo --enqueued =0 --dry-run`
 
 ### remove-queue
 Removes a queue.
