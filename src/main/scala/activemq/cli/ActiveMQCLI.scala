@@ -32,13 +32,15 @@ import org.springframework.stereotype.Component
 class ActiveMQCLI extends CommandMarker {
 
   @CliCommand(value = Array("release-notes"), help = "Displays release notes")
-  def releaseNotes: String = ActiveMQCLI.ReleaseNotes.keySet.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x).map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
+  def releaseNotes: String = ActiveMQCLI.ReleaseNotes.keySet.toSeq.sorted.reverse.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x).map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
 
 }
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.3.0" → List(
+  lazy val ReleaseNotes = Map("v0.4.0" → List(
+    "Fixed a bug that prevented the embedded broker from being started"
+  ), "v0.3.0" → List(
     "Updated shell command 'list-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
     "Updated shell command 'purge-all-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
     "Updated shell command 'remove-all-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
@@ -61,7 +63,7 @@ object ActiveMQCLI extends App {
     "Updated shell command 'export-broker': default export path is 'activemq-cli/output' when no path is given",
     "Updated shell command 'connect-broker': validate amqurl (as specified in activemq-cli.config)",
     "Fixed a bug that caused an error when activemq-cli was running from a path that contains spaces (Windows)"
-  ), "v0.0.1" → List(
+  ), "v0.0.0" → List(
     "New shell command 'add-queue'",
     "New shell command 'add-topic'",
     "New shell command 'connect'",

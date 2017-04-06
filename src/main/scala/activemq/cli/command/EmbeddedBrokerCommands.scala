@@ -34,8 +34,7 @@ class EmbeddedBrokerCommands extends Commands {
   var embeddedBroker: Option[BrokerService] = None
 
   @CliAvailabilityIndicator(Array("start-embedded-broker"))
-  def isStartEmbeddedBrokerAvailable: Boolean = embeddedBroker.isEmpty
-
+  def isStartEmbeddedBrokerAvailable: Boolean = embeddedBroker.isEmpty || !embeddedBroker.get.isStarted
   @CliAvailabilityIndicator(Array("stop-embedded-broker"))
   def isStopEmbeddedBrokerAvailable: Boolean = {
     embeddedBroker match {
