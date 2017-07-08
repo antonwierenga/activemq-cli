@@ -1,5 +1,5 @@
 # activemq-cli
-Command-line interface utility (Windows/macOS/Linux) to interact with a JMX enabled Apache ActiveMQ message broker.
+Command-line tool (Windows/macOS/Linux) to interact with a JMX enabled Apache ActiveMQ message broker.
 
 [![alt text](/activemq_demo.gif)](https://www.youtube.com/watch?v=e_D6qGl-ZC8 "YouTube demo video")
 Here is a [three minute video](https://www.youtube.com/watch?v=e_D6qGl-ZC8) that shows how to install, configure and use ActiveMQ CLI. 
