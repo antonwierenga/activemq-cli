@@ -78,7 +78,7 @@ object Implicits {
                              }
                              {
                                message match {
-                                 case textMessage: TextMessage ⇒ addOptional(
+                                 case textMessage: TextMessage if Option(textMessage.getText).isDefined ⇒ addOptional(
                                    textMessage.getText,
                                    <body>{ scala.xml.PCData(textMessage.getText.replaceAll("]]>", "]]]]><![CDATA[>")) }</body>
                                  )
