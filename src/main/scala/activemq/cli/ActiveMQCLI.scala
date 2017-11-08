@@ -32,14 +32,17 @@ import org.springframework.stereotype.Component
 class ActiveMQCLI extends CommandMarker {
 
   @CliCommand(value = Array("release-notes"), help = "Displays release notes")
-  def releaseNotes: String = ActiveMQCLI.ReleaseNotes.keySet.toSeq.sorted.reverse.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x).map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
-
+  def releaseNotes: String = ActiveMQCLI.ReleaseNotes.keySet.toSeq.sorted.map(x ⇒ s"$x\n" + ActiveMQCLI.ReleaseNotes(x)
+    .map(y ⇒ s"    - $y").mkString("\n")).mkString("\n")
 }
 
 object ActiveMQCLI extends App {
 
   lazy val ReleaseNotes = Map("v0.4.0" → List(
-    "Fixed a bug that prevented the embedded broker from being started"
+    "Updated shell command 'connect': option --broker now uses tab completion",
+    "Updated shell command 'list-messages': option --queue now mandatory",
+    "Fixed a bug that prevented the embedded broker from being started",
+    "Fixed a bug that caused an error when export-messages is run against a queue containing a message with empty text"
   ), "v0.3.0" → List(
     "Updated shell command 'list-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
     "Updated shell command 'purge-all-queues': new filter options --pending, --enqueued, --dequeued and --consumers (replaces --no-consumer)",
