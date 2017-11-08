@@ -77,12 +77,20 @@ object Implicits {
                                } </properties>)
                              }
                              {
-                               message match {
-                                 case textMessage: TextMessage ⇒ addOptional(
-                                   textMessage.getText,
-                                   <body>{ scala.xml.PCData(textMessage.getText.replaceAll("]]>", "]]]]><![CDATA[>")) }</body>
-                                 )
-                                 case _⇒ scala.xml.NodeSeq.Empty
+                               try {
+                                 message match {
+                                   case textMessage: TextMessage ⇒ addOptional(
+                                     textMessage.getText,
+                                     <body>
+                                       { scala.xml.PCData(textMessage.getText.replaceAll("]]>", "]]]]><![CDATA[>")) }
+                                     </body>
+                                   )
+                                   case _⇒ scala.xml.NodeSeq.Empty
+                                 }
+                               } catch {
+                                 case e: NullPointerException ⇒
+                                   println(s"warning: ${e.getMessage}\n")
+                                   scala.xml.NodeSeq.Empty
                                }
                              }
                            </jms-message>)
