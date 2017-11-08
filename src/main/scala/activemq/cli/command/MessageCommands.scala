@@ -187,7 +187,7 @@ class MessageCommands extends Commands {
 
   @CliCommand(value = Array("list-messages"), help = "Displays messages")
   def listMessages(
-    @CliOption(key = Array("queue"), mandatory = false, help = "The name of the queue") queue: String,
+    @CliOption(key = Array("queue"), mandatory = true, help = "The name of the queue") queue: String,
     @CliOption(key = Array("selector"), mandatory = false, help = "the JMS message selector") selector: String,
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String
   ): String = {
