@@ -112,30 +112,31 @@ class BrokerCommands extends Commands {
 
   @CliCommand(value = Array("connect"), help = "Connects to a broker")
   def connect(
-    @CliOption(key = Array("broker"), mandatory = true, help = "The Broker Alias") pBroker: String
+    @CliOption(key = Array("broker"), mandatory = true, help = "The Broker Alias") pBroker: Broker
   ): String = {
 
+    val brokerAlias = pBroker.alias
     try {
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker")) throw new IllegalArgumentException(s"Broker '$pBroker' not found in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.jmxurl")) throw new IllegalArgumentException(s"jmxurl not found for broker '$pBroker' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
-      if (!ActiveMQCLI.Config.hasPath(s"broker.$pBroker.amqurl")) throw new IllegalArgumentException(s"amqurl not found for broker '$pBroker' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$brokerAlias")) throw new IllegalArgumentException(s"Broker '$brokerAlias' not found in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$brokerAlias.jmxurl")) throw new IllegalArgumentException(s"jmxurl not found for broker '$brokerAlias' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
+      if (!ActiveMQCLI.Config.hasPath(s"broker.$brokerAlias.amqurl")) throw new IllegalArgumentException(s"amqurl not found for broker '$brokerAlias' in ${new File(System.getProperty("config.file")).getCanonicalPath}") //scalastyle:ignore
 
-      val username = if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.username")) {
-        ActiveMQCLI.Config.getString(s"broker.$pBroker.username")
+      val username = if (ActiveMQCLI.Config.hasPath(s"broker.$brokerAlias.username")) {
+        ActiveMQCLI.Config.getString(s"broker.$brokerAlias.username")
       } else {
         new ConsoleReader().readLine(prompt("Enter username: "))
       }
 
-      val password = if (ActiveMQCLI.Config.hasPath(s"broker.$pBroker.password")) {
-        ActiveMQCLI.Config.getString(s"broker.$pBroker.password")
+      val password = if (ActiveMQCLI.Config.hasPath(s"broker.$brokerAlias.password")) {
+        ActiveMQCLI.Config.getString(s"broker.$brokerAlias.password")
       } else {
         new ConsoleReader().readLine(prompt("Enter password: "), new Character('*'))
       }
 
-      ActiveMQCLI.broker = Option(new Broker(pBroker, ActiveMQCLI.Config.getString(s"broker.$pBroker.amqurl"),
-        ActiveMQCLI.Config.getString(s"broker.$pBroker.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$pBroker.jmxname"), username, password))
+      ActiveMQCLI.broker = Option(new Broker(brokerAlias, ActiveMQCLI.Config.getString(s"broker.$brokerAlias.amqurl"),
+        ActiveMQCLI.Config.getString(s"broker.$brokerAlias.jmxurl"), ActiveMQCLI.Config.getOptionalString(s"broker.$brokerAlias.jmxname"), username, password))
 
-      setSslProperties(pBroker)
+      setSslProperties(brokerAlias)
       withSession((session: Session) ⇒ {})
       withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
         info(s"Connected to broker '${ActiveMQCLI.broker.get.alias}'")
