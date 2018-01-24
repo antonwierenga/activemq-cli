@@ -78,7 +78,7 @@ class MessageCommandsTests {
 
   @Test
   def testSendAndExportInlineMessageAllHeadersProvided = {
-    assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --correlation-id testCorrelationId --delivery-mode NON_PERSISTENT --time-to-live 2000 --priority 1 --body testMessage").getResult)
+    assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --reply-to replyQueue --correlation-id testCorrelationId --delivery-mode NON_PERSISTENT --time-to-live 2000 --priority 1 --body testMessage").getResult)
     assertEquals(info("Messages listed: 1"), shell.executeCommand("list-messages --queue testQueue").getResult)
 
     val messageFilePath = createTempFilePath("MessageCommandsTests_testSendAndExportMessage")
@@ -93,7 +93,7 @@ class MessageCommandsTests {
       assertFalse((xml \ "jms-message" \ "header" \ "destination").isEmpty)
       assertEquals("1", (xml \ "jms-message" \ "header" \ "priority") text)
       assertEquals("false", (xml \ "jms-message" \ "header" \ "redelivered") text)
-      assertTrue((xml \ "jms-message" \ "header" \ "reply-to").isEmpty)
+      assertEquals("queue://replyQueue", (xml \ "jms-message" \ "header" \ "reply-to") text)
       assertFalse((xml \ "jms-message" \ "header" \ "timestamp").isEmpty)
       assertTrue((xml \ "jms-message" \ "header" \ "type").isEmpty)
       assertEquals("testMessage", (xml \ "jms-message" \ "body") text)

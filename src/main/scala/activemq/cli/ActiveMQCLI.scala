@@ -38,7 +38,10 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.4.0" → List(
+  lazy val ReleaseNotes = Map("v0.5.0" → List(
+    "Updated shell command 'send-message': new option --reply-to",
+    "Fixed a bug that caused the <reply-to> header to be omitted when sending messages from file"
+  ), "v0.4.0" → List(
     "Updated shell command 'connect': option --broker now uses tab completion",
     "Updated shell command 'list-messages': option --queue now mandatory",
     "Fixed a bug that prevented the embedded broker from being started",

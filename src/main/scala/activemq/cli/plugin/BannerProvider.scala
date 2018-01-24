@@ -34,7 +34,7 @@ class BannerProvider extends DefaultBannerProvider {
        |                                                        """.stripMargin
   }
 
-  override def getVersion: String = ActiveMQCLI.ReleaseNotes.keysIterator.next
+  override def getVersion: String = ActiveMQCLI.ReleaseNotes.keySet.toSeq.sorted.reverse.head
 
   override def getWelcomeMessage: String = s"Welcome to ActiveMQ CLI $getVersion"
 

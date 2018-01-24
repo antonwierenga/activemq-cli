@@ -47,6 +47,7 @@ class MessageCommands extends Commands {
   val JMSCorrelationID = ("JMSCorrelationID", "correlation-id")
   val JMSPriority = ("JMSPriority", "priority")
   val JMSDeliveryMode = ("JMSDeliveryMode", "delivery-mode")
+  val JMSReplyTo = ("JMSReplyTo", "reply-to")
   val TimeToLive = ("timeToLive", "time-to-live")
 
   @CliAvailabilityIndicator(Array("move-messages", "copy-messages", "list-messages", "send-message", "export-messages"))
@@ -86,6 +87,7 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("topic"), mandatory = false, help = "The name of the topic") topic: String,
     @CliOption(key = Array("body"), mandatory = false, help = "The body of the message") body: String,
     @CliOption(key = Array("correlation-id"), mandatory = false, help = "The correlation id of the message") correlationId: String,
+    @CliOption(key = Array("reply-to"), mandatory = false, help = "Name of the destination (topic or queue) the message replies should be sent to") replyTo: String,
     @CliOption(key = Array("delivery-mode"), mandatory = false, help = "The delivery mode of the message") deliveryMode: DeliveryMode,
     @CliOption(key = Array("time-to-live"), mandatory = false, help = "The time to live (in milliseconds) of the message") timeToLive: String,
     @CliOption(key = Array("priority"), mandatory = false, help = "The priority of the message") priority: String,
@@ -105,7 +107,7 @@ class MessageCommands extends Commands {
             s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}"
           )
         }
-        if (correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive) {
+        if (replyTo || correlationId || Option(deliveryMode).isDefined || timeToLive || priority || timeToLive) {
           throw new IllegalArgumentException("When --file is specified only --queue or --topic is allowed")
         }
       }
@@ -124,7 +126,7 @@ class MessageCommands extends Commands {
       if (body) {
         val headers = new java.util.HashMap[String, String]()
         for (
-          (key, value) ← Map(JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
+          (key, value) ← Map(JMSReplyTo → replyTo, JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
             JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)
         ) {
           if (Option(value).isDefined) headers.put(key._1, value.toString)
@@ -137,7 +139,7 @@ class MessageCommands extends Commands {
         for (i ← (1 to times)) yield {
           (XML.loadFile(file) \ "jms-message").map(xmlMessage ⇒ {
             val headers = new java.util.HashMap[String, String]()
-            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode).map(header ⇒ {
+            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode, JMSReplyTo).map(header ⇒ {
               if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
             })
             if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode.toString)
