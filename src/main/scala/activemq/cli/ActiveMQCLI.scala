@@ -38,7 +38,9 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.5.0" → List(
+  lazy val ReleaseNotes = Map("v0.6.0" → List(
+    "Fixed java version check (openjdk)"
+  ), "v0.5.0" → List(
     "Updated shell command 'send-message': new option --reply-to",
     "Fixed a bug that caused the <reply-to> header to be omitted when sending messages from file"
   ), "v0.4.0" → List(
