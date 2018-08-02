@@ -265,9 +265,10 @@ Sends a message or file of messages to a queue or topic.
   - topic
   - priority (not applicable if -file is specified)                    
   - correlation-id (not applicable if -file is specified) 
+  - reply-to (not applicable if -file is specified)  
   - delivery-mode (not applicable if -file is specified) 
   - time-to-live (not applicable if -file is specified) 
-  - times (number of times the message is send)
+  - times (number of times the message is sent)
   - file
 
 Example file:
@@ -283,6 +284,7 @@ Example file:
     <header>
       <priority>0</priority>
       <correlation-id>12345</correlation-id>
+      <reply-to>myRepliesQueue</reply-to>
       <delivery-mode>2</delivery-mode>
       <time-to-live>1000</time-to-live>
     </header>
