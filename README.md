@@ -178,6 +178,15 @@ Moves messages from a queue to another queue.
   - to 
   - selector (move messages that match the (JMS) selector)
 
+### pause-queue
+Pauses a queues.
+
+##### Parameters:
+  - name 
+  - force (no prompt for confirmation)
+
+Example:`pause-queue --name foo`
+
 ### purge-all-queues
 Purges all queues.
 
@@ -255,6 +264,15 @@ Removes a topic.
   - force (no prompt for confirmation)
 
 Example:`remove-topic --name foo`
+
+### resume-queue
+Resumes a queues.
+
+##### Parameters:
+  - name 
+  - force (no prompt for confirmation)
+
+Example:`resume-queue --name foo`
 
 ### send-message
 Sends a message or file of messages to a queue or topic.
