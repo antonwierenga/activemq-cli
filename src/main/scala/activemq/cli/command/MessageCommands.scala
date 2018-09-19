@@ -95,13 +95,15 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("file"), mandatory = false, help = "The file containing messages to send") file: String
   ): String = {
     val start = System.currentTimeMillis
+    val pFile = if (file) file.replaceFirst("^~", System.getProperty("user.home")) else file
+
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
       if (!file && !body) throw new IllegalArgumentException("Either --body or --file must be specified, but not both")
       if ((!queue && !topic) || (queue && topic)) throw new IllegalArgumentException("Either --queue or --topic must be specified, but not both")
       if (file) {
-        if (!new File(file).exists) throw new IllegalArgumentException(s"File '$file' does not exist")
+        if (!new File(pFile).exists) throw new IllegalArgumentException(s"File '$file' does not exist")
         try {
-          if ((XML.loadFile(file) \ "jms-message").isEmpty) throw new IllegalArgumentException(s"No message found in '$file'")
+          if ((XML.loadFile(pFile) \ "jms-message").isEmpty) throw new IllegalArgumentException(s"No message found in '$file'")
         } catch {
           case spe: org.xml.sax.SAXParseException ⇒ throw new IllegalArgumentException(
             s"Error in $file line: ${spe.getLineNumber}, column: ${spe.getColumnNumber}, error: ${spe.getMessage}"
@@ -137,7 +139,7 @@ class MessageCommands extends Commands {
         }
       } else { // file
         for (i ← (1 to times)) yield {
-          (XML.loadFile(file) \ "jms-message").map(xmlMessage ⇒ {
+          (XML.loadFile(pFile) \ "jms-message").map(xmlMessage ⇒ {
             val headers = new java.util.HashMap[String, String]()
             Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode, JMSReplyTo).map(header ⇒ {
               if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
@@ -162,10 +164,11 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("regex"), mandatory = false, help = "The regular expression the JMS text message must match") regex: String,
     @CliOption(key = Array("file"), mandatory = false, help = "The file that is used to save the messages in") file: String
   ): String = {
-    if (file && new File(file).exists()) {
+    val pFile = if (file) file.replaceFirst("^~", System.getProperty("user.home")) else file
+    if (file && new File(pFile).exists()) {
       warn(s"File '$file' already exists")
     } else {
-      val messageFile = Option(file).getOrElse(s"${queue}_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
+      val messageFile = Option(pFile).getOrElse(s"${queue}_${new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date())}.xml")
       val outputFile: File = Option(new File(messageFile).getParent) match {
         case Some(parent) ⇒ new File(messageFile)
         case _            ⇒ new File(ApplicationOutputPath, messageFile)

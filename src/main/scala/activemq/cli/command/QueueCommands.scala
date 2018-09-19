@@ -57,6 +57,30 @@ class QueueCommands extends Commands {
     })
   }
 
+  @CliCommand(value = Array("pause-queue"), help = "Pauses a queue")
+  def pauseQueue(
+    @CliOption(key = Array("name"), mandatory = true, help = "The name of the queue") name: String,
+    @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String
+  ): String = {
+    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+      confirm(force)
+      MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, name), classOf[QueueViewMBean], true).pause()
+      info(s"Queue '$name' paused")
+    })
+  }
+
+  @CliCommand(value = Array("resume-queue"), help = "Resumes a queue")
+  def resumeQueue(
+    @CliOption(key = Array("name"), mandatory = true, help = "The name of the queue") name: String,
+    @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String
+  ): String = {
+    withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
+      confirm(force)
+      MBeanServerInvocationHandler.newProxyInstance(mBeanServerConnection, validateQueueExists(brokerViewMBean, name), classOf[QueueViewMBean], true).resume()
+      info(s"Queue '$name' resumed")
+    })
+  }
+
   @CliCommand(value = Array("remove-queue"), help = "Removes a queue")
   def removeQueue(
     @CliOption(key = Array("name"), mandatory = true, help = "The name of the queue") name: String,

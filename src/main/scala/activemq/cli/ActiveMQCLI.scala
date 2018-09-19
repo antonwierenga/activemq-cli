@@ -39,6 +39,10 @@ class ActiveMQCLI extends CommandMarker {
 object ActiveMQCLI extends App {
 
   lazy val ReleaseNotes = Map("v0.6.0" → List(
+    "Added shell command 'pause-queue'",
+    "Added shell command 'resume-queue'",
+    "Updated shell command 'send-message': support for '~' in file option",
+    "Updated shell command 'export-messages': support for '~' in file option",
     "Fixed java version check (openjdk)"
   ), "v0.5.0" → List(
     "Updated shell command 'send-message': new option --reply-to",
