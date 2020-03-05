@@ -49,6 +49,7 @@ class MessageCommands extends Commands {
   val JMSDeliveryMode = ("JMSDeliveryMode", "delivery-mode")
   val JMSReplyTo = ("JMSReplyTo", "reply-to")
   val TimeToLive = ("timeToLive", "time-to-live")
+  val JMSType = ("JMSType", "type")
 
   @CliAvailabilityIndicator(Array("move-messages", "copy-messages", "list-messages", "send-message", "export-messages"))
   def isBrokerAvailable: Boolean = ActiveMQCLI.broker.isDefined
@@ -141,7 +142,7 @@ class MessageCommands extends Commands {
         for (i ← (1 to times)) yield {
           (XML.loadFile(pFile) \ "jms-message").map(xmlMessage ⇒ {
             val headers = new java.util.HashMap[String, String]()
-            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode, JMSReplyTo).map(header ⇒ {
+            Seq(JMSCorrelationID, JMSPriority, TimeToLive, JMSDeliveryMode, JMSReplyTo, JMSType).map(header ⇒ {
               if (!(xmlMessage \ "header" \ header._2).isEmpty) headers.put(header._1, (xmlMessage \ "header" \ header._2).text)
             })
             if (!headers.containsKey(JMSDeliveryMode._1)) headers.put(JMSDeliveryMode._1, DeliveryMode.PERSISTENT.getJMSDeliveryMode.toString)
