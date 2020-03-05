@@ -93,6 +93,7 @@ class MessageCommands extends Commands {
     @CliOption(key = Array("time-to-live"), mandatory = false, help = "The time to live (in milliseconds) of the message") timeToLive: String,
     @CliOption(key = Array("priority"), mandatory = false, help = "The priority of the message") priority: String,
     @CliOption(key = Array("times"), mandatory = false, unspecifiedDefaultValue = "1", help = "The number of times the message is send") times: Int,
+    @CliOption(key = Array("type"), mandatory = false, help = "The type of the message") jmsType: String,
     @CliOption(key = Array("file"), mandatory = false, help = "The file containing messages to send") file: String
   ): String = {
     val start = System.currentTimeMillis
@@ -130,7 +131,7 @@ class MessageCommands extends Commands {
         val headers = new java.util.HashMap[String, String]()
         for (
           (key, value) ← Map(JMSReplyTo → replyTo, JMSCorrelationID → correlationId, JMSPriority → priority, TimeToLive → timeToLive,
-            JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode)
+            JMSDeliveryMode → Option(deliveryMode).getOrElse(DeliveryMode.PERSISTENT).getJMSDeliveryMode, JMSType → jmsType)
         ) {
           if (Option(value).isDefined) headers.put(key._1, value.toString)
         }

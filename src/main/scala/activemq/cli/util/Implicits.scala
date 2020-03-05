@@ -46,7 +46,7 @@ object Implicits {
 
   implicit class MessageImprovements(val message: Message) {
 
-    val prettyPrinter = new scala.xml.PrettyPrinter(80, 2) //scalastyle:ignore
+    val prettyPrinter = new scala.xml.PrettyPrinter(100000, 2) //scalastyle:ignore
 
     def toXML(timestampFormat: Option[String] = None): String = {
 

@@ -289,6 +289,7 @@ Sends a message or file of messages to a queue or topic.
   - delivery-mode (not applicable if -file is specified) 
   - time-to-live (not applicable if -file is specified) 
   - times (number of times the message is sent)
+  - type (not applicable if -file is specified) 
   - file
 
 Example file:
@@ -307,6 +308,7 @@ Example file:
       <reply-to>myRepliesQueue</reply-to>
       <delivery-mode>2</delivery-mode>
       <time-to-live>1000</time-to-live>
+      <type>myCustomType</type>
     </header>
     <properties>
       <property>

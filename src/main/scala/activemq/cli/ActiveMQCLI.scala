@@ -38,7 +38,11 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.6.0" → List(
+  lazy val ReleaseNotes = Map("v0.7.0" → List(
+    "Updated shell command 'send-message': new option --type",
+    "Fixed shell command 'send-message': set JMSType header when sending messages from file",
+    "Increased width used in XML formatting"
+  ), "v0.6.0" → List(
     "Added shell command 'pause-queue'",
     "Added shell command 'resume-queue'",
     "Updated shell command 'send-message': support for '~' in file option",
