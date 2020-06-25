@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat
 import javax.jms.Message
 import java.util.Date
 import java.util.UUID
+import scala.util.control.Breaks._
 
 abstract class Commands extends PrintStackTraceExecutionProcessor {
 
@@ -139,38 +140,50 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   }
 
   def withBroker(callback: (BrokerViewMBean, MBeanServerConnection) ⇒ String): String = {
+    var connectionMessage = ""
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
-        val jmxConnector = JMXConnectorFactory.connect(
-          new JMXServiceURL(matched.jmxurl),
-          mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
-        )
-        try {
-          jmxConnector.connect
-          // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
-          val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
-            .par.map(properties ⇒
-              jmxConnector.getMBeanServerConnection.queryNames(
-                new ObjectName(s"org.apache.activemq:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
-                null //scalastyle:ignore
-              )).flatten
-            .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
-              jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
-            ))
-            .filter(!_.isSlave)
+        val jmxurls = matched.jmxurl.split(",")
+        breakable {
+          jmxurls.foreach { url ⇒
+            val jmxConnector = JMXConnectorFactory.connect(
+              new JMXServiceURL(url.trim),
+              mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
+            )
+            try {
+              jmxConnector.connect
+              // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
+              val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
+                .par.map(properties ⇒
+                  jmxConnector.getMBeanServerConnection.queryNames(
+                    new ObjectName(s"org.apache.activemq:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
+                    null //scalastyle:ignore
+                  )).flatten
+                .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
+                  jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
+                ))
+                .filter(!_.isSlave)
 
-          brokerViewMBeans.headOption match {
-            case Some(brokerViewMBean) ⇒ callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
-            case _                     ⇒ "Broker not found"
+              brokerViewMBeans.headOption match {
+                case Some(brokerViewMBean) ⇒ {
+                  connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
+                  break
+                }
+                case _ ⇒ {
+                  connectionMessage = "Broker not found"
+                }
+              }
+            } catch {
+              case illegalArgumentException: IllegalArgumentException ⇒ connectionMessage = warn(illegalArgumentException.getMessage)
+            } finally {
+              jmxConnector.close
+            }
           }
-        } catch {
-          case illegalArgumentException: IllegalArgumentException ⇒ warn(illegalArgumentException.getMessage)
-        } finally {
-          jmxConnector.close
         }
       case _ ⇒
-        "No Broker set"
+        connectionMessage = "No Broker set"
     }
+    connectionMessage
   }
 
   def withEveryMirrorQueueMessage(queue: String, selector: Option[String], regex: Option[String], message: String, callback: (Message) ⇒ Unit): String = {
