@@ -38,7 +38,6 @@ import java.text.SimpleDateFormat
 import javax.jms.Message
 import java.util.Date
 import java.util.UUID
-import scala.util.control.Breaks._
 
 abstract class Commands extends PrintStackTraceExecutionProcessor {
 
@@ -140,12 +139,13 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   }
 
   def withBroker(callback: (BrokerViewMBean, MBeanServerConnection) ⇒ String): String = {
+    var isConnected = false
     var connectionMessage = ""
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
         val jmxurls = matched.jmxurl.split(",")
-        breakable {
-          jmxurls.foreach { url ⇒
+        jmxurls.foreach { url ⇒
+          if (!isConnected) {
             val jmxConnector = JMXConnectorFactory.connect(
               new JMXServiceURL(url.trim),
               mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
@@ -167,7 +167,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
               brokerViewMBeans.headOption match {
                 case Some(brokerViewMBean) ⇒ {
                   connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
-                  break
+                  isConnected = true
                 }
                 case _ ⇒ {
                   connectionMessage = "Broker not found"
