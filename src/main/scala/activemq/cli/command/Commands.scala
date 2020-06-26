@@ -166,15 +166,17 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
 
               brokerViewMBeans.headOption match {
                 case Some(brokerViewMBean) ⇒ {
-                  connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
                   isConnected = true
+                  connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
                 }
                 case _ ⇒ {
                   connectionMessage = "Broker not found"
                 }
               }
             } catch {
-              case illegalArgumentException: IllegalArgumentException ⇒ connectionMessage = warn(illegalArgumentException.getMessage)
+              case illegalArgumentException: IllegalArgumentException ⇒ {
+                connectionMessage = warn(illegalArgumentException.getMessage)
+              }
             } finally {
               jmxConnector.close
             }
