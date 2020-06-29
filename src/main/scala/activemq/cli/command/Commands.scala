@@ -139,38 +139,67 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
   }
 
   def withBroker(callback: (BrokerViewMBean, MBeanServerConnection) ⇒ String): String = {
+    var isConnected = false
+    var connectionMessage = ""
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
-        val jmxConnector = JMXConnectorFactory.connect(
-          new JMXServiceURL(matched.jmxurl),
-          mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
-        )
-        try {
-          jmxConnector.connect
-          // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
-          val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
-            .par.map(properties ⇒
-              jmxConnector.getMBeanServerConnection.queryNames(
-                new ObjectName(s"org.apache.activemq:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
-                null //scalastyle:ignore
-              )).flatten
-            .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
-              jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
-            ))
-            .filter(!_.isSlave)
+        val jmxurls = matched.jmxurl.split(",")
+        jmxurls.foreach { url ⇒
+          if (!isConnected) {
+            // println("Attempting to connect to URL: " + url)
+            var jmxConnector: javax.management.remote.JMXConnector = null
+            try {
+              jmxConnector = JMXConnectorFactory.connect(
+                new JMXServiceURL(url.trim),
+                mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
+              )
+              jmxConnector.connect
+              // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
+              val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
+                .par.map(properties ⇒
+                  jmxConnector.getMBeanServerConnection.queryNames(
+                    new ObjectName(s"org.apache.activemq:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
+                    null //scalastyle:ignore
+                  )).flatten
+                .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
+                  jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
+                ))
+                .filter(!_.isSlave)
 
-          brokerViewMBeans.headOption match {
-            case Some(brokerViewMBean) ⇒ callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
-            case _                     ⇒ "Broker not found"
+              brokerViewMBeans.headOption match {
+                case Some(brokerViewMBean) ⇒ {
+                  isConnected = true
+                  connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
+                }
+                case _ ⇒ {
+                  connectionMessage = "Broker not found"
+                }
+              }
+            } catch {
+              case illegalArgumentException: IllegalArgumentException ⇒ {
+                connectionMessage = warn(illegalArgumentException.getMessage)
+              }
+              case ioException: java.io.IOException ⇒ {
+                var cause = ioException.getCause
+                if (cause != null && cause.isInstanceOf[javax.naming.ServiceUnavailableException]) {
+                  // e.g. JMX port not open
+                  connectionMessage = warn("Could not establish JMX connection with (any) URL: " + matched.jmxurl)
+                } else {
+                  // e.g. malformed URL or unknown host
+                  throw ioException
+                }
+              }
+            } finally {
+              if (jmxConnector != null) {
+                jmxConnector.close
+              }
+            }
           }
-        } catch {
-          case illegalArgumentException: IllegalArgumentException ⇒ warn(illegalArgumentException.getMessage)
-        } finally {
-          jmxConnector.close
         }
       case _ ⇒
-        "No Broker set"
+        connectionMessage = "No Broker set"
     }
+    connectionMessage
   }
 
   def withEveryMirrorQueueMessage(queue: String, selector: Option[String], regex: Option[String], message: String, callback: (Message) ⇒ Unit): String = {
