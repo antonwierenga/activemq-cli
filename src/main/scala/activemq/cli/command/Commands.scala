@@ -146,11 +146,13 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
         val jmxurls = matched.jmxurl.split(",")
         jmxurls.foreach { url ⇒
           if (!isConnected) {
-            val jmxConnector = JMXConnectorFactory.connect(
-              new JMXServiceURL(url.trim),
-              mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
-            )
+            // println("Attempting to connect to URL: " + url)
+            var jmxConnector: javax.management.remote.JMXConnector = null
             try {
+              jmxConnector = JMXConnectorFactory.connect(
+                new JMXServiceURL(url.trim),
+                mapAsJavaMap(Map(CREDENTIALS → Array(matched.username, matched.password)))
+              )
               jmxConnector.connect
               // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
               val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
@@ -177,8 +179,20 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
               case illegalArgumentException: IllegalArgumentException ⇒ {
                 connectionMessage = warn(illegalArgumentException.getMessage)
               }
+              case ioException: java.io.IOException ⇒ {
+                var cause = ioException.getCause
+                if (cause != null && cause.isInstanceOf[javax.naming.ServiceUnavailableException]) {
+                  // e.g. JMX port not open
+                  connectionMessage = warn("Could not establish JMX connection with (any) URL: " + matched.jmxurl)
+                } else {
+                  // e.g. malformed URL or unknown host
+                  throw ioException
+                }
+              }
             } finally {
-              jmxConnector.close
+              if (jmxConnector != null) {
+                jmxConnector.close
+              }
             }
           }
         }
