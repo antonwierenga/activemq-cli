@@ -18,6 +18,7 @@ package activemq.cli.command
 
 import activemq.cli.ActiveMQCLI
 import activemq.cli.command.util.PrintStackTraceExecutionProcessor
+import activemq.cli.domain.Broker
 import activemq.cli.util.Console._
 import activemq.cli.util.Implicits._
 import collection.JavaConversions._
@@ -144,9 +145,12 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
         val jmxurls = matched.jmxurl.split(",")
-        jmxurls.foreach { url ⇒
+        // jmxurls.foreach { url ⇒
+        for (i ← 0 to jmxurls.size - 1) {
+          var url = jmxurls(i)
+          println("Current URL: " + url)
           if (!isConnected) {
-            // println("Attempting to connect to URL: " + url)
+            println("Attempting to connect to URL: " + url)
             var jmxConnector: javax.management.remote.JMXConnector = null
             try {
               jmxConnector = JMXConnectorFactory.connect(
@@ -170,6 +174,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
                 case Some(brokerViewMBean) ⇒ {
                   isConnected = true
                   connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
+                  ActiveMQCLI.broker = reorderJmxUrls(matched.jmxurl, i)
                 }
                 case _ ⇒ {
                   connectionMessage = "Broker not found"
@@ -200,6 +205,38 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
         connectionMessage = "No Broker set"
     }
     connectionMessage
+  }
+
+  def reorderJmxUrls(jmxurls: String, index: Integer): Option[activemq.cli.domain.Broker] = {
+    if (index == 0) {
+      ActiveMQCLI.broker
+    } else {
+      ActiveMQCLI.broker match {
+        case Some(matched) ⇒ {
+          val alias = matched.alias
+          val amqurl = matched.amqurl
+          var jmxurl = matched.jmxurl
+          val jmxName = matched.jmxName
+          val username = matched.username
+          val password = matched.password
+
+          val jmxurls = matched.jmxurl.split(",")
+          val url = jmxurls(0)
+          jmxurls(0) = jmxurls(index)
+          jmxurls(index) = url
+
+          jmxurl = ""
+          for (i ← 0 to jmxurls.size - 1) {
+            if (i > 0) {
+              jmxurl = jmxurl + ","
+            }
+            jmxurl = jmxurl + jmxurls(i)
+          }
+          Option(new Broker(alias, amqurl, jmxurl, jmxName, username, password))
+        }
+        case _ ⇒ ActiveMQCLI.broker
+      }
+    }
   }
 
   def withEveryMirrorQueueMessage(queue: String, selector: Option[String], regex: Option[String], message: String, callback: (Message) ⇒ Unit): String = {
