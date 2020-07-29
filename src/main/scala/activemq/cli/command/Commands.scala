@@ -171,7 +171,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
                 case Some(brokerViewMBean) ⇒ {
                   isConnected = true
                   connectionMessage = callback(brokerViewMBean, jmxConnector.getMBeanServerConnection())
-                  ActiveMQCLI.broker = reorderJmxUrls(matched.jmxurl, i)
+                  ActiveMQCLI.broker = reorderJmxUrls(i)
                 }
                 case _ ⇒ {
                   connectionMessage = "Broker not found"
@@ -204,7 +204,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     connectionMessage
   }
 
-  def reorderJmxUrls(jmxurls: String, index: Integer): Option[activemq.cli.domain.Broker] = {
+  def reorderJmxUrls(index: Integer): Option[activemq.cli.domain.Broker] = {
     if (index == 0) {
       ActiveMQCLI.broker
     } else {
