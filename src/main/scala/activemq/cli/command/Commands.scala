@@ -145,7 +145,6 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     ActiveMQCLI.broker match {
       case Some(matched) ⇒
         val jmxurls = matched.jmxurl.split(",")
-        // jmxurls.foreach { url ⇒
         for (i ← 0 to jmxurls.size - 1) {
           var url = jmxurls(i)
           println("Current URL: " + url)
