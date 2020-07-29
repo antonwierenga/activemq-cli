@@ -147,9 +147,7 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
         val jmxurls = matched.jmxurl.split(",")
         for (i ← 0 to jmxurls.size - 1) {
           var url = jmxurls(i)
-          println("Current URL: " + url)
           if (!isConnected) {
-            println("Attempting to connect to URL: " + url)
             var jmxConnector: javax.management.remote.JMXConnector = null
             try {
               jmxConnector = JMXConnectorFactory.connect(
