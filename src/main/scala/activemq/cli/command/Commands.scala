@@ -223,14 +223,8 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
           val url = jmxurls(0)
           jmxurls(0) = jmxurls(index)
           jmxurls(index) = url
+          jmxurl = jmxurls.mkString(",")
 
-          jmxurl = ""
-          for (i ← 0 to jmxurls.size - 1) {
-            if (i > 0) {
-              jmxurl = jmxurl + ","
-            }
-            jmxurl = jmxurl + jmxurls(i)
-          }
           Option(new Broker(alias, amqurl, jmxurl, jmxName, username, password))
         }
         case _ ⇒ ActiveMQCLI.broker
