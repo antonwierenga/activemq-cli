@@ -97,13 +97,14 @@ class QueueCommands extends Commands {
   def removeAllQueues(
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
+    @CliOption(key = Array("exclude-filter"), mandatory = false, help = "Only queues with a name that does not contain the value specified by exclude-filter are listed") excludeFilter: String, //scalastyle:ignore            
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
     @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
     @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
     @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
     @CliOption(key = Array("consumers"), mandatory = false, help = "Only queues that meet the consumers filter are listed") consumers: String
   ): String = {
-    withFilteredQueues("removed", force, filter, dryRun, pending, enqueued, dequeued, consumers,
+    withFilteredQueues("removed", force, filter, excludeFilter, dryRun, pending, enqueued, dequeued, consumers,
       (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean, pending: String, enqueued: String, dequeued: String,
         consumers: String) ⇒ {
         brokerViewMBean.removeQueue(queueViewMBean.getName)
@@ -114,13 +115,14 @@ class QueueCommands extends Commands {
   def purgeAllQueues(
     @CliOption(key = Array("force"), specifiedDefaultValue = "yes", mandatory = false, help = "No prompt") force: String,
     @CliOption(key = Array("filter"), mandatory = false, help = "The query") filter: String,
+    @CliOption(key = Array("exclude-filter"), mandatory = false, help = "Only queues with a name that does not contain the value specified by exclude-filter are listed") excludeFilter: String, //scalastyle:ignore        
     @CliOption(key = Array("dry-run"), specifiedDefaultValue = "yes", mandatory = false, help = "Dry run") dryRun: String,
     @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
     @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
     @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
     @CliOption(key = Array("consumers"), mandatory = false, help = "Only queues that meet the consumers filter are listed") consumers: String
   ): String = {
-    withFilteredQueues("purged", force, filter, dryRun, pending, enqueued, dequeued, consumers,
+    withFilteredQueues("purged", force, filter, excludeFilter, dryRun, pending, enqueued, dequeued, consumers,
       (queueViewMBean: QueueViewMBean, brokerViewMBean: BrokerViewMBean, dryRun: Boolean, pending: String, enqueued: String, dequeued: String,
         consumers: String) ⇒ {
         queueViewMBean.purge()
@@ -130,6 +132,7 @@ class QueueCommands extends Commands {
   @CliCommand(value = Array("list-queues"), help = "Displays queues")
   def listQueues( //scalastyle:ignore
     @CliOption(key = Array("filter"), mandatory = false, help = "Only queues with a name that contains the value specified by filter are listed") filter: String, //scalastyle:ignore
+    @CliOption(key = Array("exclude-filter"), mandatory = false, help = "Only queues with a name that does not contain the value specified by exclude-filter are listed") excludeFilter: String, //scalastyle:ignore    
     @CliOption(key = Array("pending"), mandatory = false, help = "Only queues that meet the pending filter are listed") pending: String,
     @CliOption(key = Array("enqueued"), mandatory = false, help = "Only queues that meet the enqueued filter are listed") enqueued: String,
     @CliOption(key = Array("dequeued"), mandatory = false, help = "Only queues that meet the dequeued filter are listed") dequeued: String,
@@ -145,8 +148,13 @@ class QueueCommands extends Commands {
       val consumersCount = parseFilterParameter(consumers, "consumers")
 
       val queueViewMBeans = brokerViewMBean.getQueues.filter(objectName ⇒
-        if (filter) {
+        if (filter && excludeFilter) {
+          getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase) &&
+            !getDestinationKeyProperty(objectName).toLowerCase.contains(Option(excludeFilter).getOrElse("").toLowerCase)
+        } else if (filter && !excludeFilter) {
           getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
+        } else if (excludeFilter) {
+          !getDestinationKeyProperty(objectName).toLowerCase.contains(Option(excludeFilter).getOrElse("").toLowerCase)
         } else {
           true
         }).par.map({ objectName ⇒
@@ -177,7 +185,7 @@ class QueueCommands extends Commands {
     })
   }
 
-  def withFilteredQueues(action: String, force: String, filter: String, dryRun: Boolean, pending: String, enqueued: String, dequeued: String, //scalastyle:ignore
+  def withFilteredQueues(action: String, force: String, filter: String, excludeFilter: String, dryRun: Boolean, pending: String, enqueued: String, dequeued: String, //scalastyle:ignore
     consumers: String, callback: (QueueViewMBean, BrokerViewMBean, Boolean, String, String, String, String) ⇒ Unit): String = {
     withBroker((brokerViewMBean: BrokerViewMBean, mBeanServerConnection: MBeanServerConnection) ⇒ {
 
@@ -188,8 +196,13 @@ class QueueCommands extends Commands {
 
       if (!dryRun) confirm(force)
       val rows = brokerViewMBean.getQueues.filter(objectName ⇒
-        if (filter) {
+        if (filter && excludeFilter) {
+          getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase) &&
+            !getDestinationKeyProperty(objectName).toLowerCase.contains(Option(excludeFilter).getOrElse("").toLowerCase)
+        } else if (filter && !excludeFilter) {
           getDestinationKeyProperty(objectName).toLowerCase.contains(Option(filter).getOrElse("").toLowerCase)
+        } else if (excludeFilter) {
+          !getDestinationKeyProperty(objectName).toLowerCase.contains(Option(excludeFilter).getOrElse("").toLowerCase)
         } else {
           true
         }).par.map({ objectName ⇒

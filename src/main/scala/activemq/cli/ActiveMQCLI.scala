@@ -38,7 +38,15 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.7.0" → List(
+  lazy val ReleaseNotes = Map("v0.9.0" → List(
+    "Updated shell command 'list-queues': new option --exclude-filter",
+    "Updated shell command 'purge-all-queues': new option --exclude-filter",
+    "Updated shell command 'remove-all-queues': new option --exclude-filter"
+  ), "v0.8.1" → List(
+    "Improved speed when using multiple jmxurls"
+  ), "v0.8.0" → List(
+    "Add support for multiple jmxurls"
+  ), "v0.7.0" → List(
     "Updated shell command 'send-message': new option --type",
     "Fixed shell command 'send-message': set JMSType header when sending messages from file",
     "Increased width used in XML formatting"
