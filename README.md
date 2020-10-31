@@ -151,6 +151,7 @@ Lists queues.
 
 ##### Parameters:
   - filter (list queues with the specified filter in the name)
+  - exclude-filter (list queues without the specified exclude-filter in the name)
   - pending (list queues for which the number of pending messages meets the pending filter)
   - enqueued (list queues for which the number of enqueued messages meets the enqueued filter)
   - dequeued (list queues for which the number of dequeued messages meets the dequeued filter)
@@ -196,6 +197,7 @@ Purges all queues.
   - force (no prompt for confirmation)
   - dry-run (use this to test what is going to be purged, no queues are actually purged)
   - filter (queues with the specified filter in the name)
+  - exclude-filter (list queues without the specified exclude-filter in the name)  
   - pending (purge queues for which the number of pending messages meets the pending filter)
   - enqueued (purge queues for which the number of enqueued messages meets the enqueued filter)
   - dequeued (purge queues for which the number of dequeued messages meets the dequeued filter)
@@ -226,6 +228,7 @@ Removes all queues.
   - force (no prompt for confirmation)
   - dry-run (use this to test what is going to be removed, no queues are actually removed)
   - filter (queues with the specified filter in the name)
+  - exclude-filter (list queues without the specified exclude-filter in the name)  
   - pending (remove queues for which the number of pending messages meets the pending filter)
   - enqueued (remove queues for which the number of enqueued messages meets the enqueued filter)
   - dequeued (remove queues for which the number of dequeued messages meets the dequeued filter)
