@@ -156,16 +156,17 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
               )
               jmxConnector.connect
               // Fuse ESB Enterprise 7.1.0 / ActiveMQ 5.9.0 use different ObjectNames
-              val brokerViewMBeans = List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
-                .par.map(properties ⇒
-                  jmxConnector.getMBeanServerConnection.queryNames(
-                    new ObjectName(s"org.apache.activemq:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
-                    null //scalastyle:ignore
-                  )).flatten
-                .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
-                  jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
-                ))
-                .filter(!_.isSlave)
+              val brokerViewMBeans = List("org.apache.activemq", "org.apache.activemq.artemis").par.map(broker ⇒
+                List(Map("type" → "type", "brokerName" → "brokerName"), Map("type" → "Type", "brokerName" → "BrokerName"))
+                  .par.map(properties ⇒
+                    jmxConnector.getMBeanServerConnection.queryNames(
+                      new ObjectName(s"${broker}:${properties.get("type").get}=Broker,${properties.get("brokerName").get}=${matched.jmxName.getOrElse("*")}"), //scalastyle:ignore
+                      null //scalastyle:ignore
+                    )).flatten
+                  .par.map(objectName ⇒ MBeanServerInvocationHandler.newProxyInstance(
+                    jmxConnector.getMBeanServerConnection, objectName, classOf[BrokerViewMBean], true
+                  ))
+                  .filter(!_.isSlave)).flatten
 
               brokerViewMBeans.headOption match {
                 case Some(brokerViewMBean) ⇒ {
