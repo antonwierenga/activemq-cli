@@ -39,7 +39,7 @@ class ActiveMQCLI extends CommandMarker {
 object ActiveMQCLI extends App {
 
   lazy val ReleaseNotes = Map("v0.9.1" → List(
-    "Support for artmemis jmx domain"
+    "Support for artemis jmx domain"
   ), "v0.9.0" → List(
     "Updated shell command 'list-queues': new option --exclude-filter",
     "Updated shell command 'purge-all-queues': new option --exclude-filter",
