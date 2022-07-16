@@ -85,28 +85,28 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
 
   def validateTopicExists(brokerViewMBean: BrokerViewMBean, topic: String): ObjectName = {
     brokerViewMBean.getTopics.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).contains(topic)).headOption.getOrElse(
+      getDestinationKeyProperty(objectName).contains(replaceSpecialCharacters(topic))).headOption.getOrElse(
       throw new IllegalArgumentException(s"Topic '$topic' does not exist")
     )
   }
 
   def validateTopicNotExists(brokerViewMBean: BrokerViewMBean, topic: String): Unit = {
     if (!brokerViewMBean.getTopics.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).equals(topic)).isEmpty) {
+      getDestinationKeyProperty(objectName).equals(replaceSpecialCharacters(topic))).isEmpty) {
       throw new IllegalArgumentException(s"Topic '$topic' already exists")
     }
   }
 
   def validateQueueExists(brokerViewMBean: BrokerViewMBean, queue: String): ObjectName = {
     brokerViewMBean.getQueues.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).equals(queue)).headOption.getOrElse(
+      getDestinationKeyProperty(objectName).equals(replaceSpecialCharacters(queue))).headOption.getOrElse(
       throw new IllegalArgumentException(s"Queue '$queue' does not exist")
     )
   }
 
   def validateQueueNotExists(brokerViewMBean: BrokerViewMBean, queue: String): Unit = {
     if (!brokerViewMBean.getQueues.filter(objectName ⇒
-      getDestinationKeyProperty(objectName).equals(queue)).isEmpty) {
+      getDestinationKeyProperty(objectName).equals(replaceSpecialCharacters(queue))).isEmpty) {
       throw new IllegalArgumentException(s"Queue '$queue' already exists")
     }
   }
@@ -283,5 +283,9 @@ abstract class Commands extends PrintStackTraceExecutionProcessor {
     } else {
       0
     }
+  }
+
+  def replaceSpecialCharacters(name: String): String = {
+    name.replace("*", "&ast;").replace(":", "_")
   }
 }

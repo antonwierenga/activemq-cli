@@ -71,6 +71,13 @@ class QueueCommandsTests {
   }
 
   @Test
+  def testRemoveQueueWithAsteriskAndColon = {
+    assertEquals(info("Queue 'test*:Queue' added"), shell.executeCommand("add-queue --name test*:Queue").getResult)
+    assertEquals(info("Queue 'test*:Queue' removed"), shell.executeCommand("remove-queue --name test*:Queue --force").getResult)
+    assertEquals(warn(s"No queues found"), shell.executeCommand("list-queues").getResult)
+  }
+
+  @Test
   def testPurgeQueue = {
     assertEquals(info("Messages sent to queue 'testQueue': 1"), shell.executeCommand("send-message --queue testQueue --body testMessage").getResult)
     assertEquals(
