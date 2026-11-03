@@ -59,6 +59,7 @@ class EmbeddedBrokerCommands extends Commands {
             embeddedBroker.get.setDataDirectory(new File(ApplicationPath, "data/activemq-data").getPath)
           }
           embeddedBroker.get.addConnector(ActiveMQCLI.Config.getString("embedded-broker.connector"))
+          embeddedBroker.get.getManagementContext.setCreateConnector(true)
           embeddedBroker.get.getManagementContext.setConnectorPort(ActiveMQCLI.Config.getInt("embedded-broker.jmxport"));
           embeddedBroker.get.start
           info("Embedded broker started")

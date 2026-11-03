@@ -2,14 +2,17 @@ organization := "com.antonwierenga"
 
 name := "activemq-cli"
 
-version := "0.9.2"
+version := "0.9.3"
 
 scalaVersion := "2.11.6"
 
 licenses += ("Apache-2.0", url("http://opensource.org/licenses/apache2.0.php"))
 
 libraryDependencies += "org.springframework.shell" % "spring-shell" % "1.1.0.RELEASE"
-libraryDependencies += "org.apache.activemq" % "activemq-all" % "5.13.1"
+libraryDependencies += "org.apache.activemq" % "activemq-all" % "5.19.12"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.26.1"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.26.1"
+libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.22.4"
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 libraryDependencies += "org.scala-lang" % "jline" % "2.11.0-M3"
 libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.3"

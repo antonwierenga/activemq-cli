@@ -38,7 +38,9 @@ class ActiveMQCLI extends CommandMarker {
 
 object ActiveMQCLI extends App {
 
-  lazy val ReleaseNotes = Map("v0.9.2" → List(
+  lazy val ReleaseNotes = Map("v0.9.3" → List(
+    "Upgraded ActiveMQ to 5.19.12 (requires Java 17 or later)"
+  ), "v0.9.2" → List(
     "Fixed multiple shell commands not working for queue/topic names containing the colon or asterisk character"
   ), "v0.9.0" → List(
     "Updated shell command 'list-queues': new option --exclude-filter",
