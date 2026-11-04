@@ -12,6 +12,7 @@ libraryDependencies += "org.springframework.shell" % "spring-shell" % "1.1.0.REL
 libraryDependencies += "org.apache.activemq" % "activemq-all" % "5.19.12"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.26.1"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.26.1"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-jcl" % "2.26.1"
 libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.22.4"
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 libraryDependencies += "org.scala-lang" % "jline" % "2.11.0-M3"
